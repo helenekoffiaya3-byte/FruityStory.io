@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "FruityStory.io — fruit drama creation platform",
+  "scripts": {
+    "build": "node -e \"console.log('FruityStory.io static build: no compilation required')\""
+  },
   "dependencies": {
     "@netlify/functions": "^4.2.5",
     "openai": "^5.12.2"
