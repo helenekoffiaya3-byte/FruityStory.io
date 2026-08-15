@@ -1,1 +1,27 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FruityStory.io — Générer</title><link rel="stylesheet" href="/styles.css"></head><body><header class="topbar"><a class="brand" href="/">🍓 FruityStory.io</a><nav><a href="/dashboard.html">Dashboard</a><a href="/studio.html">Studio</a><a href="/publish.html">Publier</a></nav></header><main class="page"><span class="eyebrow">GÉNÉRATION IA</span><h1>Générer une vidéo</h1><form class="generator" onsubmit="event.preventDefault();document.getElementById('status').textContent='Demande prête. Le backend pourra envoyer cette requête au fournisseur vidéo configuré.'"><label>Décris la vidéo<textarea required rows="7" placeholder="Décris précisément ta vidéo..."></textarea></label><div class="form-grid"><label>Modèle<select><option>Sora</option><option>Veo</option><option>Seedance</option><option>PixVerse</option></select></label><label>Format<select><option>9:16</option><option>16:9</option><option>1:1</option></select></label></div><label><input type="checkbox"> Ajouter une narration</label><button class="btn primary">Lancer la génération</button><p id="status" class="message"></p></form></main><footer>© 2026 FruityStory.io</footer></body></html>
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FruityStory.io — Générer</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="/">🍎 FruityStory.io</a><nav><a href="/dashboard.html">Profil</a><a href="/studio.html">Studio</a><a href="/publish.html">Publier</a></nav></header>
+<main class="page">
+  <span class="eyebrow">GÉNÉRATION IA</span>
+  <h1>Génère ta première vidéo</h1>
+  <p>Crée un drama de fruits joué comme la vie réelle : dialogues et actions, sans narration.</p>
+  <form class="generator" id="generatePageForm">
+    <label>Idée du drama<textarea id="storyPrompt" required rows="7" placeholder="Ex. Pomito, garçon inspiré d’une pomme, rencontre Bananita dans un café et ils découvrent un secret..."></textarea></label>
+    <div class="form-grid">
+      <label>Référence fruit<select id="fruit"><option>Pomme</option><option>Banane</option><option>Fraise</option><option>Cerise</option><option>Orange</option><option>Pastèque</option><option>Autre fruit</option></select></label>
+      <label>Format<select id="format"><option>9:16</option><option>16:9</option><option>1:1</option></select></label>
+    </div>
+    <label>Nom du personnage <input id="characterName" placeholder="Ex. Pomito, Pomita, Banano, Bananita…"></label>
+    <p class="message">Le nom peut être librement inspiré du fruit : aucune terminaison obligatoire.</p>
+    <button class="btn primary" type="submit">✨ Préparer les scènes avec l’IA</button>
+    <p id="status" class="message" role="status"></p>
+  </form>
+</main>
+<footer>© 2026 FruityStory.io</footer>
+<script>
+const form=document.querySelector('#generatePageForm');
+form?.addEventListener('submit',async(e)=>{e.preventDefault();const status=document.querySelector('#status');status.textContent='🤖 Préparation du drama…';try{const r=await fetch('/api/ai/story',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt:document.querySelector('#storyPrompt').value,fruit:document.querySelector('#fruit').value,characterName:document.querySelector('#characterName').value,format:document.querySelector('#format').value})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Erreur');sessionStorage.setItem('fruitystory:lastStory',JSON.stringify(data));status.textContent=`✅ ${data.scenes?.length||0} scène(s) préparée(s).`; }catch(err){console.error(err);status.textContent='Le backend IA doit encore recevoir ses identifiants de fournisseur dans Netlify.';}});
+</script>
+</body></html>
