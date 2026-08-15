@@ -4,10 +4,13 @@
   "private": true,
   "description": "FruityStory.io — fruit drama creation platform",
   "scripts": {
-    "build": "node -e \"console.log('FruityStory.io static build: no compilation required')\""
+    "build": "esbuild src/main.ts --bundle --outfile=main.js --format=esm"
   },
   "dependencies": {
     "@netlify/functions": "^4.2.5",
     "openai": "^5.12.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
   }
 }
