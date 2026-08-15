@@ -1,1 +1,33 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FruityStory.io — Publier</title><link rel="stylesheet" href="/styles.css"></head><body><header class="topbar"><a class="brand" href="/">🍓 FruityStory.io</a><nav><a href="/dashboard.html">Dashboard</a><a href="/studio.html">Studio</a><a href="/generate.html">Générer</a></nav></header><main class="page"><span class="eyebrow">PUBLICATION</span><h1>Publier ta vidéo</h1><section class="generator"><label>Titre<input placeholder="Titre de la vidéo"></label><label>Description<textarea rows="4" placeholder="Décris ta vidéo..."></textarea></label><label>Localisation<select><option>Ne pas afficher</option><option>Ajouter ma position</option><option>Choisir un pays</option></select></label><label>Confidentialité<select><option>Tout le monde</option><option>Amis</option><option>Privé</option></select></label><label><input type="checkbox"> Autoriser les commentaires</label><label><input type="checkbox"> Autoriser les téléchargements</label><button class="btn primary" onclick="alert('Publication préparée. Le backend devra effectuer la publication réelle.')">Publier</button></section></main><footer>© 2026 FruityStory.io</footer></body></html>
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FruityStory.io — Publier</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="/">🍎 FruityStory.io</a><nav><a href="/dashboard.html">Profil</a><a href="/studio.html">Studio</a><a href="/generate.html">Générer</a></nav></header>
+<main class="page">
+  <span class="eyebrow">PUBLICATION</span>
+  <h1>Publier ta vidéo</h1>
+  <p>La localisation ci-dessous indique <strong>où tu veux diffuser ton contenu</strong>. Elle ne demande pas ta position personnelle.</p>
+  <section class="generator">
+    <label>Titre<input id="title" placeholder="Titre de la vidéo"></label>
+    <label>Description<textarea id="description" rows="4" placeholder="Décris ta vidéo..."></textarea></label>
+    <label>📍 Où veux-tu publier ce contenu ?
+      <select id="audienceScope">
+        <option value="world">🌍 Monde entier</option>
+        <optgroup label="Continents">
+          <option>Afrique</option><option>Amérique du Nord</option><option>Amérique du Sud</option><option>Asie</option><option>Europe</option><option>Océanie</option>
+        </optgroup>
+        <optgroup label="Autres zones"><option>Pays</option><option>Région / zone</option></optgroup>
+      </select>
+    </label>
+    <label>Confidentialité<select id="privacy"><option>Tout le monde</option><option>Amis</option><option>Privé</option></select></label>
+    <label><input type="checkbox" id="comments" checked> Autoriser les commentaires</label>
+    <label><input type="checkbox" id="downloads"> Autoriser les téléchargements</label>
+    <button class="btn primary" id="publishButton">Publier</button>
+    <p id="status" class="message" role="status"></p>
+  </section>
+</main>
+<footer>© 2026 FruityStory.io</footer>
+<script>
+document.querySelector('#publishButton')?.addEventListener('click',()=>{const scope=document.querySelector('#audienceScope').value;const privacy=document.querySelector('#privacy').value;document.querySelector('#status').textContent=`Publication préparée — diffusion : ${scope} — confidentialité : ${privacy}.`});
+</script>
+</body></html>
