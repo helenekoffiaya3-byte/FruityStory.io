@@ -27,6 +27,18 @@
       <div class="hero-card"><div class="play">▶</div><strong>Ton premier drama</strong><small>Décris ton idée et l'IA prépare les personnages et les scènes.</small></div>
     </section>
 
+    <section class="panel" id="ai-story-generator">
+      <div>
+        <span class="eyebrow">DIRECTEUR IA</span>
+        <h2>Créer un drama avec l'IA</h2>
+        <p>Décris ton idée. FruityStory crée les personnages, les scènes et les dialogues sans narrateur ni voix off.</p>
+      </div>
+      <textarea id="story-prompt" rows="6" placeholder="Exemple : crée un drama entre une mangue ambitieuse et une fraise jalouse..."></textarea>
+      <button class="btn primary" id="generate-story-btn" type="button">Générer le drama</button>
+      <div id="story-status" role="status" aria-live="polite"></div>
+      <div id="story-result"></div>
+    </section>
+
     <section class="features" aria-label="Fonctionnalités principales">
       <article><span>🎭</span><h2>Personnages-fruits</h2><p>Un fruit sert de référence visuelle. Le créateur choisit le nom, le genre, le corps, les vêtements et la personnalité.</p></article>
       <article><span>🎬</span><h2>Scènes réalistes</h2><p>Actions et dialogues naturels, avec continuité des personnages et direction visuelle.</p></article>
@@ -60,5 +72,7 @@
   </nav>
 
   <footer><span>© 2026 FruityStory.io</span><div><a href="/settings.html">Confidentialité</a><a href="/settings.html">Conditions</a></div></footer>
+
+  <script type="module" src="/main.js"></script>
 </body>
 </html>
