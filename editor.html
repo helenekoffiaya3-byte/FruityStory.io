@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="FruityStory.io — éditeur vidéo créateur."><title>FruityStory.io — Éditeur</title>
+<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/editor.css">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/">🍓 <span>FruityStory.io</span></a><nav><a href="/">Accueil</a><a href="/editor.html">Éditeur</a><a href="/#publier">Publier</a></nav><a class="btn ghost" href="/">Quitter</a></header>
+<main class="editor-shell">
+<section class="editor-head"><div><span class="eyebrow">ÉDITEUR VIDÉO</span><h1>Crée ta vidéo</h1><p>Ajoute médias, texte, stickers, effets, voix, audio et transitions.</p></div><div class="editor-actions"><button class="btn secondary" id="undoBtn">↶ Annuler</button><button class="btn primary" id="saveBtn">Enregistrer le projet</button></div></section>
+<section class="editor-grid">
+<div class="preview"><div class="preview-stage"><div class="preview-placeholder" id="previewContent"><span>🎬</span><strong>Aperçu vidéo</strong><small>Ajoute une photo ou une vidéo pour commencer</small></div></div><div class="timeline"><div class="timeline-label">Timeline</div><div class="timeline-track" id="timelineTrack"><span>Aucun média ajouté</span></div></div></div>
+<aside class="tools" aria-label="Outils d'édition">
+<div class="tool-section"><h2>Médias</h2><div class="tool-row"><button class="tool" data-action="media">🖼️ Photos + vidéos</button><button class="tool" data-action="trim">✂️ Découpage</button></div></div>
+<div class="tool-section"><h2>Créatif</h2><div class="tool-row"><button class="tool" data-action="stickers">😊 Stickers</button><button class="tool" data-action="effects">✨ Effets vidéo</button><button class="tool" data-action="face">🎭 Effets de visage</button><button class="tool" data-action="text">📝 Texte</button></div></div>
+<div class="tool-section"><h2>Audio</h2><div class="tool-row"><button class="tool" data-action="voice">🎙️ Effets vocaux</button><button class="tool" data-action="audio">🎵 Son / audio</button><button class="tool" data-action="volume">🔊 Volume / mixage</button></div></div>
+<div class="tool-section"><h2>Montage</h2><div class="tool-row"><button class="tool" data-action="transitions">🎞️ Transitions</button><button class="tool" data-action="format">📐 Formats</button></div></div>
+<div class="tool-section settings"><h2>Publication</h2><label>Confidentialité<select id="privacy"><option>Tout le monde</option><option>Amis</option><option>Privé</option></select></label><label>Localisation<input id="location" placeholder="Ajouter une localisation"></label><label>Pays<select id="country"><option value="">Sélectionner un pays</option><option>Côte d’Ivoire</option><option>France</option><option>Allemagne</option><option>Royaume-Uni</option><option>Autre pays</option></select></label></div>
+</aside></section>
+<section class="editor-status" id="editorStatus" role="status">Prêt à éditer.</section>
+</main><script src="/editor.js" defer></script></body></html>
