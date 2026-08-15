@@ -1,0 +1,10 @@
+{
+  "name": "fruitystory-io",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FruityStory.io — fruit drama creation platform",
+  "dependencies": {
+    "@netlify/functions": "^4.2.5",
+    "openai": "^5.12.2"
+  }
+}
