@@ -3,53 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="FruityStory.io — création, génération et publication de vidéos.">
-  <title>FruityStory.io — Studio vidéo</title>
+  <meta name="description" content="FruityStory.io — crée des dramas de fruits avec l'IA, organise tes séries et prépare tes publications.">
+  <title>FruityStory.io — Crée tes dramas de fruits</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#accueil" aria-label="FruityStory.io">🍓 <span>FruityStory.io</span></a>
+    <a class="brand" href="#accueil" aria-label="FruityStory.io">🍎 <span>FruityStory.io</span></a>
     <nav aria-label="Navigation principale">
-      <a href="#accueil">Accueil</a><a href="#studio">Studio</a><a href="#generer">Générer</a><a href="#publier">Publier</a>
+      <a href="#accueil">Accueil</a><a href="/studio.html">Studio</a><a href="/generate.html">Générer</a><a href="/publish.html">Publier</a><a href="/dashboard.html">Profil</a>
     </nav>
-    <button class="btn ghost" id="loginBtn">Se connecter</button>
+    <a class="btn ghost" href="/auth.html">Se connecter</a>
   </header>
 
   <main>
     <section id="accueil" class="hero">
       <div class="hero-copy">
-        <span class="badge">✨ Création vidéo assistée par IA</span>
-        <h1>Transforme tes idées en <span>histoires vidéo.</span></h1>
-        <p>Crée, édite et prépare tes vidéos pour publication depuis un studio simple et moderne.</p>
-        <div class="actions"><a class="btn primary" href="#generer">Créer une vidéo</a><a class="btn secondary" href="#studio">Ouvrir le Studio</a></div>
+        <span class="badge">🍎 FruityStory Studio · création vidéo IA</span>
+        <h1>Crée des <span>dramas de fruits</span> qui vivent comme des humains.</h1>
+        <p>Imagine ton histoire, crée des personnages-fruits avec leurs propres noms et identités, construis des scènes avec dialogues naturels — sans narration — puis prépare ta vidéo pour la publication.</p>
+        <div class="actions"><a class="btn primary" href="/generate.html">Génère ta première vidéo</a><a class="btn secondary" href="/studio.html">Ouvrir FruityStory Studio</a></div>
       </div>
-      <div class="hero-card"><div class="play">▶</div><strong>Ton prochain projet</strong><small>Décris une scène pour commencer</small></div>
+      <div class="hero-card"><div class="play">▶</div><strong>Ton premier drama</strong><small>Décris ton idée et l'IA prépare les personnages et les scènes.</small></div>
     </section>
 
-    <section class="features" aria-label="Fonctionnalités">
-      <article><span>🎬</span><h2>Génération</h2><p>Décris une idée et prépare ton projet vidéo.</p></article>
-      <article><span>✂️</span><h2>Édition</h2><p>Organise scènes, texte, effets et éléments créatifs.</p></article>
-      <article><span>🌍</span><h2>Publication</h2><p>Choisis la visibilité et prépare le partage de ton contenu.</p></article>
+    <section class="features" aria-label="Fonctionnalités principales">
+      <article><span>🎭</span><h2>Personnages-fruits</h2><p>Un fruit sert de référence visuelle. Le créateur choisit le nom, le genre, le corps, les vêtements et la personnalité.</p></article>
+      <article><span>🎬</span><h2>Scènes réalistes</h2><p>Actions et dialogues naturels, avec continuité des personnages et direction visuelle.</p></article>
+      <article><span>✂️</span><h2>Studio créateur</h2><p>Éditeur, effets, stickers, voix, séries, couvertures et outils de publication réunis au même endroit.</p></article>
     </section>
 
-    <section id="studio" class="panel"><div><span class="eyebrow">STUDIO</span><h2>Un espace pour créer</h2><p>Retrouve tes projets et lance rapidement une nouvelle création.</p></div><a class="btn primary" href="#generer">Nouveau projet</a></section>
-
-    <section id="generer" class="generator">
-      <div><span class="eyebrow">GÉNÉRATEUR</span><h2>Décris ta vidéo</h2><p>Commence par une scène, une ambiance ou une histoire.</p></div>
-      <form id="videoForm">
-        <label for="prompt">Prompt vidéo</label>
-        <textarea id="prompt" rows="5" placeholder="Ex. Une jeune créatrice découvre un jardin tropical futuriste au coucher du soleil..."></textarea>
-        <div class="form-grid"><label>Durée<select id="duration"><option>10 secondes</option><option>30 secondes</option><option>1 minute</option><option>3 minutes</option></select></label><label>Format<select id="format"><option>Vertical 9:16</option><option>Carré 1:1</option><option>Paysage 16:9</option></select></label></div>
-        <button class="btn primary" type="submit">✨ Préparer la génération</button>
-        <p id="formMessage" class="message" role="status"></p>
-      </form>
+    <section class="panel" id="studio">
+      <div><span class="eyebrow">FRUITYSTORY STUDIO</span><h2>Tout l'espace créateur</h2><p>Accède aux outils de création, aux récompenses et aux statistiques depuis ton profil.</p></div>
+      <div class="actions"><a class="btn primary" href="/studio.html">Entrer dans Studio</a><a class="btn secondary" href="/rewards.html">Récompenses</a><a class="btn secondary" href="/credits.html">Crédits</a></div>
     </section>
 
-    <section id="publier" class="publish panel"><div><span class="eyebrow">PUBLICATION</span><h2>Partage avec ton audience</h2><p>Définis la visibilité de ta vidéo avant publication.</p></div><select id="privacy" aria-label="Confidentialité"><option>Tout le monde</option><option>Amis</option><option>Privé</option></select><button class="btn secondary" id="publishBtn">Publier</button></section>
+    <section class="features" aria-label="Outils créateur">
+      <article><span>📊</span><h2>Creator Insights</h2><p>Performances, audience et tendances mondiales classées du meilleur résultat au dernier.</p><a class="btn secondary" href="/dashboard.html">Voir les insights</a></article>
+      <article><span>🔥</span><h2>Tendances mondiales</h2><p>Classement mondial, progression des tendances et idées adaptées aux créations FruityStory.</p><a class="btn secondary" href="/dashboard.html">Explorer</a></article>
+      <article><span>🖼️</span><h2>Couvertures IA</h2><p>Prépare une couverture originale pour une vidéo ou une série.</p><a class="btn secondary" href="/editor.html">Ouvrir l'éditeur</a></article>
+    </section>
+
+    <section class="panel">
+      <div><span class="eyebrow">PUBLICATION</span><h2>Choisis où ton contenu doit être diffusé</h2><p>Monde entier, continent, pays ou région/zone. Ce choix concerne la diffusion du contenu, pas la position personnelle du créateur.</p></div>
+      <a class="btn primary" href="/publish.html">Préparer une publication</a>
+    </section>
+
+    <section class="panel">
+      <div><span class="eyebrow">COMPTE</span><h2>Ton profil et tes réglages</h2><p>Profil, FruityStory Studio, vérification du compte personnel et paramètres.</p></div>
+      <div class="actions"><a class="btn secondary" href="/dashboard.html">Profil</a><a class="btn secondary" href="/settings.html">Paramètres</a><a class="btn secondary" href="/auth.html">Connexion</a></div>
+    </section>
   </main>
 
-  <footer><span>© 2026 FruityStory.io</span><div><a href="#">Confidentialité</a><a href="#">Conditions</a></div></footer>
-  <script src="/app.js" defer></script>
+  <nav class="bottom-nav" aria-label="Navigation mobile">
+    <a href="/">🏠<span>Accueil</span></a><a href="/dashboard.html">👤<span>Profil</span></a><a class="create" href="/generate.html">＋<span>Générer</span></a><a href="/studio.html">🎬<span>Studio</span></a><a href="/settings.html">⚙️<span>Paramètres</span></a>
+  </nav>
+
+  <footer><span>© 2026 FruityStory.io</span><div><a href="/settings.html">Confidentialité</a><a href="/settings.html">Conditions</a></div></footer>
 </body>
 </html>
