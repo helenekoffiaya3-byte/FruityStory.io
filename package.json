@@ -4,13 +4,22 @@
   "private": true,
   "description": "FruityStory.io — fruit drama creation platform",
   "scripts": {
-    "build": "esbuild src/main.ts --bundle --outfile=main.js --format=esm"
+    "build": "esbuild src/main.ts --bundle --outfile=main.js --format=esm",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@netlify/functions": "^4.2.5",
-    "openai": "^5.12.2"
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "openai": "^5.12.2",
+    "pg": "^8.16.3",
+    "zod": "^4.0.17"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0"
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.2"
   }
 }
