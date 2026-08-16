@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^1.18.0",
     "@netlify/functions": "^4.2.5",
     "bcryptjs": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
