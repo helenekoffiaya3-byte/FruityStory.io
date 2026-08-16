@@ -2,27 +2,42 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#000"><title>Partager — FruityStory.io</title>
-<style>*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#000;color:#111}button{font:inherit}.screen{min-height:100vh;display:flex;justify-content:center;background:#000}.phone{width:min(100%,480px);min-height:100vh;background:#000;position:relative;overflow:hidden}.video{height:100vh;background:linear-gradient(145deg,#65503c,#241c18 48%,#050505);display:flex;align-items:center;justify-content:center;color:#fff}.video:after{content:'VIDÉO';font-size:12px;letter-spacing:3px;opacity:.45}.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:28px 28px 0 0;min-height:55vh;padding-bottom:calc(12px + env(safe-area-inset-bottom));box-shadow:0 -10px 35px rgba(0,0,0,.45)}.title{height:62px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;position:relative}.title .close{position:absolute;right:16px;border:0;background:none;font-size:31px;line-height:1}.search{height:48px;margin:0 20px 12px;border:0;border-radius:24px;background:#f2f2f2;padding:0 18px;font-size:16px;outline:none}.people{display:flex;gap:20px;overflow-x:auto;padding:2px 20px 18px}.person{width:88px;flex:0 0 88px;text-align:center;font-size:13px}.avatar{width:62px;height:62px;border-radius:50%;margin:auto auto 7px;background:linear-gradient(135deg,#ff8a00,#ff2455 55%,#7147ff);display:grid;place-items:center;color:#fff;font-size:21px;font-weight:700;position:relative}.plus{position:absolute;right:-2px;bottom:-1px;width:23px;height:23px;border-radius:50%;background:#7147ff;border:2px solid #fff}.label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.grid{border-top:1px solid #eee;padding:18px 13px 4px;display:grid;grid-template-columns:repeat(6,1fr);gap:14px 7px}.action{text-align:center;font-size:12px;min-width:0}.icon{width:64px;height:64px;max-width:100%;margin:auto auto 8px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:29px}.yellow{background:#ffd10a}.blue{background:#287be7}.green{background:#28c76f}.teal{background:#2eb6cf}.gray{background:#eee;color:#555}.action button{border:0;background:none;padding:0;width:100%;cursor:pointer}.share-note{text-align:center;color:#888;font-size:12px;padding:6px 20px 0}@media(min-width:700px){.phone{box-shadow:0 0 0 1px #222}.sheet{min-height:58vh}}
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#000;color:#111}button,input{font:inherit}.screen{min-height:100vh;display:flex;justify-content:center;background:#000}.phone{width:min(100%,480px);min-height:100vh;background:#000;position:relative;overflow:hidden}.video{height:100vh;background:linear-gradient(145deg,#65503c,#241c18 48%,#050505);display:flex;align-items:center;justify-content:center;color:#fff}.video:after{content:'VIDÉO';font-size:12px;letter-spacing:3px;opacity:.45}.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:28px 28px 0 0;min-height:55vh;padding-bottom:calc(12px + env(safe-area-inset-bottom));box-shadow:0 -10px 35px rgba(0,0,0,.45)}.title{height:62px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;position:relative}.title .close{position:absolute;right:16px;border:0;background:none;font-size:31px;line-height:1}.search{height:48px;margin:0 20px 12px;border:0;border-radius:24px;background:#f2f2f2;padding:0 18px;font-size:16px;outline:none;width:calc(100% - 40px)}.people{display:flex;gap:20px;overflow-x:auto;padding:2px 20px 18px;scrollbar-width:none}.people::-webkit-scrollbar,.action-row::-webkit-scrollbar{display:none}.person{width:88px;flex:0 0 88px;text-align:center;font-size:13px}.avatar{width:62px;height:62px;border-radius:50%;margin:auto auto 7px;background:linear-gradient(135deg,#ff8a00,#ff2455 55%,#7147ff);display:grid;place-items:center;color:#fff;font-size:21px;font-weight:700;position:relative}.plus{position:absolute;right:-2px;bottom:-1px;width:23px;height:23px;border-radius:50%;background:#7147ff;border:2px solid #fff}.label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions-area{border-top:1px solid #eee;padding:18px 0 4px;overflow:hidden}.action-row{display:flex;gap:8px;overflow-x:auto;padding:0 10px 16px;scrollbar-width:none}.action{width:76px;flex:0 0 76px;text-align:center;font-size:12px;min-width:0}.icon{width:64px;height:64px;margin:auto auto 8px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:29px}.yellow{background:#ffd10a}.blue{background:#287be7}.green{background:#28c76f}.teal{background:#2eb6cf}.gray{background:#eee;color:#555}.action button{border:0;background:none;padding:0;width:100%;cursor:pointer;color:#222}.share-note{text-align:center;color:#888;font-size:12px;padding:2px 20px 0;min-height:18px}@media(min-width:700px){.phone{box-shadow:0 0 0 1px #222}.sheet{min-height:58vh}}
 </style>
 </head>
 <body><div class="screen"><main class="phone"><section class="video"><button style="position:absolute;top:16px;right:16px;z-index:2;width:40px;height:40px;border:0;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:25px" onclick="location.href='/'">×</button></section><section class="sheet">
 <header class="title"><span>Envoyer à</span><button class="close" aria-label="Fermer" onclick="location.href='/'">×</button></header>
 <input class="search" id="search" placeholder="Rechercher" aria-label="Rechercher une personne">
 <div class="people" id="people"><div class="person"><div class="avatar">M<span class="plus">+</span></div><div class="label">Miraculous Ladybug 🐞</div></div><div class="person"><div class="avatar">+</div><div class="label">Inviter des ami(e)s à …</div></div><div class="person"><div class="avatar">A</div><div class="label">Amon Parfait</div></div><div class="person"><div class="avatar">J</div><div class="label">Jean Mary A…</div></div></div>
-<div class="grid">
-<div class="action"><button data-share="Republié"><div class="icon yellow">↻</div>Republier</button></div>
-<div class="action"><button data-share="Lien copié"><div class="icon blue">🔗</div>Copier le<br>lien</button></div>
-<div class="action"><button data-share="WhatsApp"><div class="icon green">◔</div>WhatsApp</button></div>
-<div class="action"><button data-share="Status"><div class="icon green">◉+</div>Status</button></div>
-<div class="action"><button data-share="Facebook"><div class="icon blue">f</div>Facebook</button></div>
-<div class="action"><button data-share="Telegram"><div class="icon teal">➤</div>Telegram</button></div>
-<div class="action"><button data-share="Duo"><div class="icon gray">◉◉</div>Duo</button></div>
-<div class="action"><button data-share="Collage"><div class="icon gray">▣</div>Collage</button></div>
-<div class="action"><button data-share="Groupe"><div class="icon gray">●●</div>Créer un<br>groupe</button></div>
-<div class="action"><button data-share="Fond d’écran"><div class="icon gray">◉</div>Définir comme<br>fond d’écran</button></div>
-<div class="action"><button data-share="Sticker"><div class="icon gray">▣+</div>Créer un<br>sticker</button></div>
-<div class="action"><button data-share="GIF"><div class="icon gray" style="font-size:17px;font-weight:800">GIF</div>Partager en<br>tant que GIF</button></div>
+<div class="actions-area">
+  <div class="action-row">
+    <div class="action"><button data-share="Republié"><div class="icon yellow">↻</div>Republier</button></div>
+    <div class="action"><button data-share="Lien copié"><div class="icon blue">🔗</div>Copier le<br>lien</button></div>
+    <div class="action"><button data-share="WhatsApp"><div class="icon green">◔</div>WhatsApp</button></div>
+    <div class="action"><button data-share="Status"><div class="icon green">◉+</div>Status</button></div>
+    <div class="action"><button data-share="Facebook"><div class="icon blue">f</div>Facebook</button></div>
+    <div class="action"><button data-share="Telegram"><div class="icon teal">➤</div>Telegram</button></div>
+  </div>
+  <div class="action-row">
+    <div class="action"><button data-share="Signaler"><div class="icon gray">⚑</div>Signaler</button></div>
+    <div class="action"><button data-share="Pas intéressé(e)"><div class="icon gray">♥</div>Pas<br>intéressé(e)</button></div>
+    <div class="action"><button data-share="Télécharger"><div class="icon gray">↓</div>Télécharger</button></div>
+    <div class="action"><button data-share="Ajouter à la Story"><div class="icon gray">⊕</div>Ajouter à la<br>Story</button></div>
+    <div class="action"><button data-share="Duo"><div class="icon gray">◉◉</div>Duo</button></div>
+    <div class="action"><button data-share="Collage"><div class="icon gray">▣</div>Collage</button></div>
+    <div class="action"><button data-share="Créer un groupe"><div class="icon gray">●●</div>Créer un<br>groupe</button></div>
+  </div>
+  <div class="action-row">
+    <div class="action"><button data-share="Fond d’écran"><div class="icon gray">◉</div>Définir comme<br>fond d’écran</button></div>
+    <div class="action"><button data-share="Sticker"><div class="icon gray">▣+</div>Créer un<br>sticker</button></div>
+    <div class="action"><button data-share="GIF"><div class="icon gray" style="font-size:17px;font-weight:800">GIF</div>Partager en<br>tant que GIF</button></div>
+  </div>
 </div><div class="share-note" id="status" aria-live="polite"></div>
 </section></main></div>
-<script>const status=document.querySelector('#status');document.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>{const label=b.dataset.share;if(label==='Lien copié'){navigator.clipboard?.writeText(location.href);status.textContent='Lien copié dans le presse-papiers';}else status.textContent=label+' sélectionné';setTimeout(()=>status.textContent='',1800)});document.querySelector('#search').addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('.person').forEach(p=>p.style.display=p.textContent.toLowerCase().includes(q)?'block':'none')});</script>
+<script>
+const status=document.querySelector('#status');
+document.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>{const label=b.dataset.share;if(label==='Lien copié'){navigator.clipboard?.writeText(location.href);status.textContent='Lien copié dans le presse-papiers';}else status.textContent=label+' sélectionné';setTimeout(()=>status.textContent='',1800)});
+document.querySelector('#search').addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('.person').forEach(p=>p.style.display=p.textContent.toLowerCase().includes(q)?'block':'none')});
+</script>
 </body></html>
