@@ -10,13 +10,13 @@
   skip_processing = false
 
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  from = "/api/health"
+  to = "/.netlify/functions/health"
   status = 200
 
 [[redirects]]
-  from = "/api/health"
-  to = "/.netlify/functions/health"
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
   status = 200
 
 [[redirects]]
