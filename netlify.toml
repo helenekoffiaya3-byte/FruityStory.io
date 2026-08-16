@@ -11,12 +11,12 @@
 
 [[redirects]]
   from = "/api/health"
-  to = "/.netlify/functions/health"
+  to = "/.netlify/functions/backend/health"
   status = 200
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "/.netlify/functions/backend/:splat"
   status = 200
 
 [[redirects]]
