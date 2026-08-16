@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000">
+  <title>Commentaires — FruityStory.io</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#000;color:#111}button,input{font:inherit}.screen{min-height:100vh;display:flex;justify-content:center;background:#000}.phone{width:min(100%,480px);min-height:100vh;background:#000;position:relative;overflow:hidden}.video{height:52vh;min-height:360px;background:linear-gradient(145deg,#4a3625,#201a16 48%,#0b0b0b);position:relative;display:flex;align-items:center;justify-content:center;color:#fff}.video:after{content:'VIDÉO';font-size:12px;letter-spacing:3px;opacity:.5}.video-top{position:absolute;inset:12px 14px auto;display:flex;justify-content:space-between;color:#fff}.close{border:0;background:rgba(0,0,0,.4);color:#fff;width:40px;height:40px;border-radius:50%;font-size:25px}.comments{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;min-height:49vh;max-height:72vh;display:flex;flex-direction:column;box-shadow:0 -10px 30px rgba(0,0,0,.35)}.head{height:58px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #eee;position:relative;font-weight:700;font-size:18px}.head button{position:absolute;right:16px;border:0;background:none;font-size:30px;line-height:1}.sort{position:absolute;right:58px;font-size:18px;transform:rotate(180deg)}.list{overflow:auto;padding:10px 16px 8px;flex:1}.comment{display:grid;grid-template-columns:44px 1fr 32px;gap:10px;padding:11px 0}.avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#ff8a00,#ff2255 55%,#7a3cff);display:grid;place-items:center;color:#fff;font-weight:700}.name{font-size:14px;color:#777;margin-bottom:5px}.name strong{color:#777}.text{font-size:15px;line-height:1.35}.meta{color:#999;font-size:12px;margin-top:7px}.heart{border:0;background:none;color:#999;font-size:20px}.composer{border-top:1px solid #eee;background:#fff;padding:8px 12px calc(10px + env(safe-area-inset-bottom));position:relative}.quick{display:flex;justify-content:space-around;font-size:25px;padding:2px 0 8px}.inputrow{display:flex;align-items:center;gap:8px}.me{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff4b8b,#7347ff);display:grid;place-items:center;color:#fff;font-weight:700}.input{flex:1;min-height:48px;border-radius:18px;background:#f2f2f2;border:0;padding:13px 15px;outline:none}.send{width:52px;height:42px;border:0;border-radius:22px;background:#ff9fbc;color:#fff;font-size:23px}.tools{display:flex;gap:25px;padding:10px 8px 0;font-size:24px}.count{font-weight:800}.hidden{display:none}@media(min-width:700px){.phone{box-shadow:0 0 0 1px #222}.video{height:45vh}.comments{min-height:55vh}}
+  </style>
+</head>
+<body><div class="screen"><main class="phone">
+  <section class="video"><div class="video-top"><span>FruityStory</span><button class="close" aria-label="Fermer" onclick="location.href='/'">×</button></div></section>
+  <section class="comments" aria-label="Commentaires">
+    <header class="head"><span class="count">189 commentaires</span><span class="sort">☰</span><button aria-label="Fermer" onclick="location.href='/'">×</button></header>
+    <div class="list" id="commentList">
+      <article class="comment"><div class="avatar">T</div><div><div class="name"><strong>tétine</strong> ❤️💍💋</div><div class="text">flim Guère</div><div class="meta">07-31 · <b>Répondre</b></div></div><button class="heart" aria-label="J'aime">♡</button></article>
+      <article class="comment"><div class="avatar">A</div><div><div class="name"><strong>Aminata</strong></div><div class="text">J'adore cette vidéo 😍</div><div class="meta">07-30 · <b>Répondre</b></div></div><button class="heart">♡</button></article>
+      <article class="comment"><div class="avatar">K</div><div><div class="name"><strong>Koffi</strong></div><div class="text">La fin m'a vraiment fait rire 😂</div><div class="meta">07-30 · <b>Répondre</b></div></div><button class="heart">♡</button></article>
+      <article class="comment"><div class="avatar">M</div><div><div class="name"><strong>Mariam</strong></div><div class="text">Partie 2 s'il te plaît ❤️</div><div class="meta">07-29 · <b>Répondre</b></div></div><button class="heart">♡</button></article>
+    </div>
+    <form class="composer" id="commentForm">
+      <div class="quick"><button type="button" aria-label="Sourire">😁</button><button type="button">🥰</button><button type="button">😂</button><button type="button">😮</button><button type="button">😉</button><button type="button">🥹</button></div>
+      <div class="inputrow"><div class="me">F</div><input class="input" id="commentInput" placeholder="Ajouter un commentaire…" autocomplete="off"><button class="send" type="submit" aria-label="Publier">↑</button></div>
+      <div class="tools"><button type="button" aria-label="Photo">▧</button><button type="button" aria-label="Sticker">☺</button><button type="button" aria-label="Mention">@</button></div>
+    </form>
+  </section>
+</main></div>
+<script>const input=document.querySelector('#commentInput');document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>input.value+=b.textContent);document.querySelectorAll('.heart').forEach(b=>b.onclick=()=>{b.textContent=b.textContent==='♡'?'♥':'♡'});document.querySelector('#commentForm').addEventListener('submit',e=>{e.preventDefault();const v=input.value.trim();if(!v)return;const el=document.createElement('article');el.className='comment';el.innerHTML='<div class="avatar">F</div><div><div class="name"><strong>Vous</strong></div><div class="text"></div><div class="meta">À l’instant · <b>Répondre</b></div></div><button class="heart">♡</button>';el.querySelector('.text').textContent=v;document.querySelector('#commentList').prepend(el);el.querySelector('.heart').onclick=()=>el.querySelector('.heart').textContent=el.querySelector('.heart').textContent==='♡'?'♥':'♡';input.value=''});</script>
+</body></html>
