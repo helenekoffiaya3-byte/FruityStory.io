@@ -4,32 +4,30 @@ import { randomUUID } from "node:crypto";
 import { reserveDailyVideoQuota, releaseDailyVideoQuota, MAX_PER_DAY } from "./lib/atomic-video-quota";
 import { createVeoVideo } from "./providers/veo";
 import { createPixVerseVideo } from "./providers/pixverse";
+import { getVerifiedSubscription } from "./lib/stripe-subscription";
 
 const redis = Redis.fromEnv();
 const QUEUE_KEY = "video-generation-queue";
 const JOB_TTL = 86400;
 
-function json(statusCode: number, body: unknown) {
-  return { statusCode, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type, authorization", "Access-Control-Allow-Methods": "POST, OPTIONS" }, body: JSON.stringify(body) };
-}
+function json(statusCode: number, body: unknown) { return { statusCode, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type, authorization", "Access-Control-Allow-Methods": "POST, OPTIONS" }, body: JSON.stringify(body) }; }
 
-function getUserId(event: Parameters<Handler>[0], body: any) {
-  const value = typeof body?.userId === "string" && body.userId.trim() ? body.userId.trim() : event.headers["x-user-id"] || "";
-  return value.trim() || null;
-}
+function getUserId(event: Parameters<Handler>[0], body: any) { const value = typeof body?.userId === "string" && body.userId.trim() ? body.userId.trim() : event.headers["x-user-id"] || ""; return value.trim() || null; }
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(204, null);
   if (event.httpMethod !== "POST") return json(405, { success: false, error: "Utilisez POST." });
-
   let body: any;
   try { body = event.body ? JSON.parse(event.body) : {}; } catch { return json(400, { success: false, error: "JSON invalide." }); }
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
   if (!prompt) return json(400, { success: false, error: "Le champ prompt est obligatoire." });
-
   const userId = getUserId(event, body);
   if (!userId) return json(401, { success: false, error: "Utilisateur non authentifié." });
-  if (body.subscription !== "ultra_premium") return json(403, { success: false, error: "La génération vidéo nécessite Ultra Premium." });
+
+  let subscription;
+  try { subscription = await getVerifiedSubscription(userId); }
+  catch (error) { console.error("Stripe subscription verification failed", error); return json(503, { success: false, error: "Vérification de l'abonnement indisponible." }); }
+  if (!subscription || subscription.plan !== "ultra_premium") return json(403, { success: false, error: "Un abonnement Ultra Premium actif est requis." });
 
   const provider = String(body.provider || "veo").toLowerCase();
   if (provider !== "veo" && provider !== "pixverse") return json(400, { success: false, error: "provider doit être 'veo' ou 'pixverse'." });
@@ -44,17 +42,11 @@ export const handler: Handler = async (event) => {
     const job = provider === "veo"
       ? await createVeoVideo({ prompt, aspectRatio: body.aspectRatio === "9:16" ? "9:16" : "16:9", resolution: body.resolution === "1080p" || body.resolution === "4k" ? body.resolution : "720p" })
       : await createPixVerseVideo({ prompt, model: body.model === "c1" ? "c1" : "v6", duration: body.seconds, quality: body.quality || "720p", aspectRatio: body.aspectRatio || "9:16", generateAudio: typeof body.generateAudio === "boolean" ? body.generateAudio : undefined, generateMultiClip: typeof body.generateMultiClip === "boolean" ? body.generateMultiClip : undefined });
-
     const operationId = provider === "veo" ? job.operationName : job.videoId;
-    const record = {
-      jobId, userId, provider, model: job.model, operationId,
-      status: "queued", prompt, clips: body.clips || [jobId], completedClipUrls: [],
-      quotaKey: quota.key, createdAt: new Date().toISOString(),
-    };
+    const record = { jobId, userId, provider, model: job.model, operationId, status: "queued", prompt, clips: body.clips || [jobId], completedClipUrls: [], quotaKey: quota.key, createdAt: new Date().toISOString() };
     await redis.set(`video-job:${jobId}`, record, { ex: JOB_TTL });
     await redis.rpush(QUEUE_KEY, jobId);
-
-    return json(200, { success: true, jobId, provider: job.provider, model: job.model, job, status: "queued", quota: { videosCreatedToday: quota.count, dailyLimit: MAX_PER_DAY, remaining: MAX_PER_DAY - quota.count, resetDate: quota.resetDate } });
+    return json(200, { success: true, jobId, provider: job.provider, model: job.model, job, status: "queued", subscription: { plan: subscription.plan, status: subscription.status }, quota: { videosCreatedToday: quota.count, dailyLimit: MAX_PER_DAY, remaining: MAX_PER_DAY - quota.count, resetDate: quota.resetDate } });
   } catch (error) {
     await releaseDailyVideoQuota(redis, quota.key);
     console.error(`${provider} generation failed:`, error);
