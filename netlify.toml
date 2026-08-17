@@ -25,6 +25,12 @@
   status = 200
 
 [[redirects]]
+  from = "/api/v1/*"
+  to = "/.netlify/functions/provider-api"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/backend/:splat"
   status = 200
