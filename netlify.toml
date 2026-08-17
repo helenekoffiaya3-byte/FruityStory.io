@@ -31,6 +31,12 @@
   status = 200
 
 [[redirects]]
+  from = "/api/settings"
+  to = "/.netlify/functions/settings"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/v1/*"
   to = "/.netlify/functions/provider-api"
   status = 200
