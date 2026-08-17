@@ -4,7 +4,25 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
 function json(statusCode: number, body: unknown) {
-  return { statusCode, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type, authorization", "Access-Control-Allow-Methods": "POST, OPTIONS" }, body: JSON.stringify(body) };
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "content-type, authorization",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+    },
+    body: JSON.stringify(body),
+  };
+}
+
+function allowedPrice(priceId: string) {
+  return [
+    process.env.STRIPE_STANDARD_PRICE_ID,
+    process.env.STRIPE_PREMIUM_PRICE_ID,
+    process.env.STRIPE_ULTRA_PREMIUM_PRICE_ID,
+  ].filter(Boolean).includes(priceId);
 }
 
 export const handler: Handler = async (event) => {
@@ -13,21 +31,36 @@ export const handler: Handler = async (event) => {
   if (!process.env.STRIPE_SECRET_KEY) return json(500, { success: false, error: "STRIPE_SECRET_KEY manquante côté serveur." });
 
   let body: any;
-  try { body = event.body ? JSON.parse(event.body) : {}; } catch { return json(400, { success: false, error: "JSON invalide." }); }
+  try {
+    body = event.body ? JSON.parse(event.body) : {};
+  } catch {
+    return json(400, { success: false, error: "JSON invalide." });
+  }
+
   const userId = typeof body.userId === "string" ? body.userId.trim() : "";
   const priceId = typeof body.priceId === "string" ? body.priceId.trim() : "";
   if (!userId || !priceId) return json(400, { success: false, error: "userId et priceId sont obligatoires." });
+  if (!allowedPrice(priceId)) return json(400, { success: false, error: "Price Stripe non autorisé." });
 
-  const origin = process.env.PUBLIC_SITE_URL || "https://fruitstory.io";
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/dashboard.html?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/pricing.html?payment=cancelled`,
-    client_reference_id: userId,
-    metadata: { userId },
-    subscription_data: { metadata: { userId } },
-    allow_promotion_codes: true,
-  });
-  return json(200, { success: true, checkoutUrl: session.url, sessionId: session.id });
+  // IMPORTANT: en production, userId doit provenir de la session/JWT serveur,
+  // et non d'une valeur librement fournie par le navigateur.
+  const origin = (process.env.PUBLIC_SITE_URL || "https://fruitystory.io").replace(/\/$/, "");
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/dashboard.html?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/pricing.html?payment=cancelled`,
+      client_reference_id: userId,
+      metadata: { userId },
+      subscription_data: { metadata: { userId } },
+      allow_promotion_codes: true,
+    });
+
+    return json(200, { success: true, checkoutUrl: session.url, sessionId: session.id });
+  } catch (error) {
+    console.error("Stripe Checkout error", error);
+    return json(502, { success: false, error: "Impossible de créer la session Stripe." });
+  }
 };
