@@ -43,8 +43,7 @@ function getApiKey(event: Parameters<Handler>[0]) {
 
 function authorized(event: Parameters<Handler>[0]) {
   const key = getApiKey(event);
-  const configured = apiKeys();
-  return Boolean(key && configured.includes(key));
+  return Boolean(key && apiKeys().includes(key));
 }
 
 function ownerId(key: string) {
@@ -139,12 +138,21 @@ export const handler: Handler = async (event) => {
         retrievalEndpoint: `/api/v1/videos/generations/${encodeURIComponent(jobId)}/download` });
     }
 
+    if (event.httpMethod === "GET" && path[0] === "videos" && path[1] === "generations" && path[2] && path[3] === "download") {
+      const job = await redis.get<any>(`video-job:${path[2]}`);
+      if (!job || job.userId !== userId) return json(404, { success: false, error: "Job introuvable." });
+      if (job.status !== "completed" || !job.finalVideoUrl) return json(409, { success: false, error: "La vidéo finale n'est pas encore disponible.", status: job.status });
+      return { statusCode: 302, headers: { Location: job.finalVideoUrl, "Cache-Control": "no-store" }, body: "" };
+    }
+
     if (event.httpMethod === "GET" && path[0] === "videos" && path[1] === "generations" && path[2]) {
       const job = await redis.get<any>(`video-job:${path[2]}`);
       if (!job || job.userId !== userId) return json(404, { success: false, error: "Job introuvable." });
       return json(200, { success: true, jobId: job.jobId, status: job.status, provider: job.provider,
         clipCount: job.clips?.length || 0, completedClips: job.clips?.filter((c: any) => c.status === "completed").length || 0,
-        finalVideoUrl: job.finalVideoUrl || null, outputUrl: job.finalVideoUrl || null, error: job.error || null });
+        finalVideoUrl: job.finalVideoUrl || null, outputUrl: job.finalVideoUrl || null,
+        downloadEndpoint: job.status === "completed" ? `/api/v1/videos/generations/${encodeURIComponent(job.jobId)}/download` : null,
+        error: job.error || null });
     }
 
     return json(404, { success: false, error: "Endpoint API introuvable." });
