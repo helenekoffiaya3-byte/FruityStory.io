@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.18.0",
+    "@netlify/blobs": "^10.3.0",
     "@netlify/functions": "^4.2.5",
     "@upstash/redis": "^1.35.3",
     "bcryptjs": "^3.0.2",
