@@ -16,7 +16,14 @@ export async function assembleVideoClips(clipUrls: string[]): Promise<Buffer> {
   try {
     const files: string[] = [];
     for (let i = 0; i < clipUrls.length; i++) {
-      const response = await fetch(clipUrls[i]);
+      const url = clipUrls[i];
+      const headers: Record<string, string> = {};
+      if (url.includes("generativelanguage.googleapis.com")) {
+        const key = process.env.GEMINI_API_KEY?.trim();
+        if (!key) throw new Error("GEMINI_API_KEY manquante pour télécharger le clip Veo.");
+        headers["x-goog-api-key"] = key;
+      }
+      const response = await fetch(url, { headers });
       if (!response.ok) throw new Error(`Téléchargement du clip ${i + 1} impossible (${response.status}).`);
       const file = path.join(dir, `clip-${String(i).padStart(4, "0")}.mp4`);
       await writeFile(file, Buffer.from(await response.arrayBuffer()));
