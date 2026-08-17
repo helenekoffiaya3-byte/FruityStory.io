@@ -1,25 +1,24 @@
+import ffmpegPath from "ffmpeg-static";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
-/**
- * Resolves ffmpeg from the Netlify runtime.
- * NETLIFY_FFMPEG_PATH can be set to a custom executable path.
- */
+/** Resolve the bundled ffmpeg binary, with an optional Netlify override. */
 export async function resolveFfmpeg(): Promise<string> {
   const configured = process.env.NETLIFY_FFMPEG_PATH?.trim();
-  if (configured) return configured;
+  const candidate = configured || ffmpegPath;
 
-  const candidates = ["ffmpeg", "/opt/bin/ffmpeg", "/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg"];
-  for (const candidate of candidates) {
-    try {
-      await execFileAsync(candidate, ["-version"]);
-      return candidate;
-    } catch {
-      // try next candidate
-    }
+  if (!candidate) {
+    throw new Error("ffmpeg-static n'a pas fourni de binaire. Configurez NETLIFY_FFMPEG_PATH.");
   }
 
-  throw new Error("ffmpeg introuvable dans le runtime Netlify. Installez-le dans le build ou configurez NETLIFY_FFMPEG_PATH.");
+  try {
+    await execFileAsync(candidate, ["-version"]);
+    return candidate;
+  } catch (error) {
+    throw new Error(
+      `ffmpeg est introuvable ou non exécutable: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
