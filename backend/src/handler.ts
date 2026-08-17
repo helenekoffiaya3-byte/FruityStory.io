@@ -5,6 +5,7 @@ import { addComment, comments, createUser, createVideo, feed, follow, getUser, g
 import { commentSchema, generateSchema, loginSchema, promoteSchema, registerSchema, videoSchema } from './validation';
 import { createSubscriptionCheckout, handleStripeWebhook } from './stripe';
 import { publicPlans, getPlan, type PlanId } from './stripe-plans';
+import { generateWithProvider, chooseProvider } from '../../netlify/functions/providers';
 
 const response=(statusCode:number,body:unknown,extra:Record<string,string>={})=>({statusCode,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*','access-control-allow-headers':'Content-Type, Authorization, Stripe-Signature','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS',...extra},body:JSON.stringify(body)});
 const jsonBody=(event:any)=>{try{return event.body?JSON.parse(event.body):{};}catch{throw Object.assign(new Error('Invalid JSON'),{status:400});}};
@@ -17,7 +18,6 @@ export const handler:Handler=async event=>{
   const p=path(event), m=event.httpMethod||'GET';
   if(!p.length)return response(200,{ok:true,service:'FruityStory.io production API'});
 
-  // Stripe webhook must use the untouched request body for signature verification.
   if(p[0]==='stripe'&&p[1]==='webhook'&&m==='POST'){
     const signature=event.headers?.['stripe-signature']||event.headers?.['Stripe-Signature'];
     if(!signature)return response(400,{error:'Missing Stripe-Signature'});
@@ -37,7 +37,6 @@ export const handler:Handler=async event=>{
   }
   if(p[0]==='auth'&&m==='GET'&&p[1]==='me'){const u=requireUser(event);return response(200,{user:await getUser(u.id)});}
 
-  // SUBSCRIPTIONS / STRIPE
   if(p[0]==='subscriptions'){
     if(m==='GET'&&!p[1]) return response(200,{plans:publicPlans()});
     if(m==='GET'&&p[1]==='me'){
@@ -71,12 +70,24 @@ export const handler:Handler=async event=>{
   if(p[0]==='search'&&m==='GET'){const q=String(event.queryStringParameters?.q||'').trim();if(!q)return response(200,{users:[],videos:[],hashtags:[]});const term=`%${q}%`;const [users,videos,hashtags]=await Promise.all([db().query('SELECT id,username,display_name AS "displayName",avatar_url AS "avatarUrl",verified FROM users WHERE username ILIKE $1 OR display_name ILIKE $1 LIMIT 20',[term]),db().query('SELECT id,author_id AS "authorId",video_url AS "videoUrl",thumbnail_url AS "thumbnailUrl",caption,views_count AS views,likes_count AS likes,comments_count AS comments,created_at AS "createdAt" FROM videos WHERE caption ILIKE $1 AND visibility=$2 ORDER BY created_at DESC LIMIT 30',[term,'public']),db().query('SELECT DISTINCT hashtag FROM video_hashtags WHERE hashtag ILIKE $1 LIMIT 30',[term])]);return response(200,{users:users.rows,videos:videos.rows,hashtags:hashtags.rows.map(x=>x.hashtag)});}
   if(p[0]==='studio'||p[0]==='analytics'){const u=requireUser(event);const r=await db().query('SELECT COUNT(*)::int videos,COALESCE(SUM(views_count),0)::bigint views,COALESCE(SUM(likes_count),0)::bigint likes,COALESCE(SUM(comments_count),0)::bigint comments,COALESCE(SUM(shares_count),0)::bigint shares FROM videos WHERE author_id=$1',[u.id]);return response(200,{overview:r.rows[0]});}
   if(p[0]==='promote'){const u=requireUser(event);if(m==='POST'){const input=promoteSchema.parse(body);const r=await db().query('INSERT INTO promote_campaigns(user_id,video_id,objective,audience,budget,duration_days) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[u.id,input.videoId,input.objective,input.audience??{},input.budget,input.durationDays]);return response(201,{campaign:r.rows[0]});}const r=await db().query('SELECT * FROM promote_campaigns WHERE user_id=$1 ORDER BY created_at DESC',[u.id]);return response(200,{items:r.rows});}
-  if(p[0]==='ai-video'&&m==='POST'&&p[1]==='generate'){const u=requireUser(event);const input=generateSchema.parse(body);const r=await db().query('INSERT INTO ai_jobs(user_id,provider,prompt,duration,aspect_ratio) VALUES($1,$2,$3,$4,$5) RETURNING *',[u.id,input.provider??'auto',input.prompt,input.duration??null,input.aspectRatio??'9:16']);return response(202,{job:r.rows[0],message:'Job queued. Connect a provider adapter to start generation.'});}
-  if(p[0]==='ai-video'&&m==='GET'&&p[1]){const u=requireUser(event);const r=await db().query('SELECT * FROM ai_jobs WHERE id=$1 AND user_id=$2',[p[1],u.id]);return r.rows[0]?response(200,{job:r.rows[0]}):response(404,{error:'Job not found'});}
+
+  // REAL AI VIDEO GENERATION: starts the provider operation instead of only queueing a DB row.
+  if(p[0]==='ai-video'&&m==='POST'&&p[1]==='generate'){
+    const u=requireUser(event);
+    const input=generateSchema.parse(body);
+    const provider=chooseProvider(input.provider);
+    const result=await generateWithProvider(provider,{prompt:input.prompt,duration:input.duration,aspectRatio:input.aspectRatio,imageUrl:input.imageUrl});
+    const r=await db().query('INSERT INTO ai_jobs(user_id,provider,prompt,duration,aspect_ratio,external_id,status) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[u.id,provider,input.prompt,input.duration??null,input.aspectRatio??'9:16',result.externalId,result.status]);
+    return response(202,{job:r.rows[0],provider,externalId:result.externalId,message:'Video generation started.'});
+  }
+  if(p[0]==='ai-video'&&m==='GET'&&p[1]){
+    const u=requireUser(event);const r=await db().query('SELECT * FROM ai_jobs WHERE id=$1 AND user_id=$2',[p[1],u.id]);
+    return r.rows[0]?response(200,{job:r.rows[0]}):response(404,{error:'Job not found'});
+  }
   if(p[0]==='credits'){const u=requireUser(event);const r=await db().query('SELECT COALESCE(SUM(amount),0)::bigint balance FROM credit_ledger WHERE user_id=$1',[u.id]);return response(200,{balance:r.rows[0].balance});}
   if(p[0]==='monetization'){requireUser(event);return response(200,{eligible:false,balance:0,estimatedRevenue:0,history:[],payouts:[],message:'Connect verified production payout rules/provider.'});}
   if(p[0]==='payments'){requireUser(event);return response(501,{error:'Use /api/subscriptions for Stripe subscriptions.'});}
   if(p[0]==='settings'){const u=requireUser(event);if(m==='GET')return response(200,{user:await getUser(u.id)});return response(501,{error:'Settings persistence endpoint not implemented yet'});}
   return response(404,{error:'Route not found',path:p.join('/')});
- }catch(e:any){const status=e?.status|| (e?.name==='ZodError'?400:500);return response(status,{error:e?.message||'Internal server error'});}
+ }catch(e:any){const status=e?.status|| (e?.name==='ZodError'?400:500);console.error(e);return response(status,{error:e?.message||'Internal server error'});}
 };
