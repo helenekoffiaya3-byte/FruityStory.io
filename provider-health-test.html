@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FruityStory — Test des clés API</title>
+  <style>
+    body{font-family:system-ui,sans-serif;background:#08120d;color:#f4fff8;max-width:900px;margin:auto;padding:24px}
+    main{background:#102119;border:1px solid #2c4b3a;border-radius:18px;padding:24px}
+    button{width:100%;padding:14px;border:0;border-radius:10px;background:#43b86b;color:#061009;font-weight:800;cursor:pointer}
+    .status{margin-top:16px;padding:16px;border-radius:12px;background:#07100b;white-space:pre-wrap}
+    .ok{border-left:4px solid #52d68b}.bad{border-left:4px solid #ff6b6b}.wait{border-left:4px solid #e5c15c}
+    table{width:100%;border-collapse:collapse;margin-top:18px}td,th{padding:10px;border-bottom:1px solid #284334;text-align:left}
+    code{background:#07100b;padding:2px 5px;border-radius:5px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Test réel des clés API FruityStory</h1>
+  <p>Ce test ne demande aucune clé dans le navigateur. Le serveur Netlify teste les clés secrètes configurées dans ses variables d'environnement.</p>
+  <button id="run">Tester ARK + Gemini + PixVerse + Stripe</button>
+  <div id="status" class="status wait">Prêt. Clique sur le bouton pour lancer le test.</div>
+  <table id="table" hidden><thead><tr><th>Fournisseur</th><th>Résultat</th><th>Détail</th></tr></thead><tbody></tbody></table>
+  <p>Endpoint utilisé : <code>/api/health/providers</code>. Aucune valeur secrète n'est renvoyée.</p>
+</main>
+<script>
+const run=document.getElementById('run');
+const status=document.getElementById('status');
+const table=document.getElementById('table');
+run.onclick=async()=>{
+  run.disabled=true; status.className='status wait'; status.textContent='Test en cours…'; table.hidden=true;
+  try{
+    const response=await fetch('/api/health/providers',{cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error || ('HTTP '+response.status));
+    const rows=Object.entries(data.providers||{});
+    document.querySelector('#table tbody').innerHTML=rows.map(([name,result])=>`<tr><td>${name}</td><td>${result.status}</td><td>${result.message||((result.status==='ok')?'Connexion et authentification OK':'')}</td></tr>`).join('');
+    table.hidden=false;
+    status.className='status '+(data.overall==='ok'?'ok':'bad');
+    status.textContent=`Résultat global : ${data.overall}\nDurée : ${data.durationMs} ms\nVérifié : ${data.checkedAt}`;
+  }catch(error){status.className='status bad';status.textContent='Échec du test : '+error.message+'\n\nVérifie que HEALTH_PROVIDERS_ENABLED=true dans Netlify.';}
+  finally{run.disabled=false;}
+};
+</script>
+</body>
+</html>
