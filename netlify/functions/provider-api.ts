@@ -1,13 +1,18 @@
 import type { Handler } from "@netlify/functions";
-import { createVeoVideo, getVeoVideoStatus } from "./providers/veo";
-import { createPixVerseVideo, getPixVerseVideoStatus } from "./providers/pixverse";
+import { Redis } from "@upstash/redis";
+import { randomUUID, createHash } from "node:crypto";
+import { createVeoVideo } from "./providers/veo";
+import { createPixVerseVideo } from "./providers/pixverse";
 
-/**
- * FruityStory Provider API
- *
- * Public API facade for third-party applications. Provider credentials stay
- * server-side; clients authenticate only with a FruityStory API key.
+/** Public FruityStory Video Provider API.
+ * Provider keys stay server-side. Consumers authenticate with a FruityStory API key.
+ * The API uses the same queued clip -> poll -> FFmpeg assembly pipeline as the site.
  */
+const redis = Redis.fromEnv();
+const QUEUE_KEY = "video-generation-queue";
+const JOB_TTL = 86400;
+const MAX_DURATION_SECONDS = 300;
+const MAX_CLIPS = 120;
 
 type Provider = "veo" | "pixverse";
 
@@ -31,100 +36,121 @@ function apiKeys(): string[] {
     .filter(Boolean);
 }
 
-function authorized(event: Parameters<Handler>[0]): boolean {
+function getApiKey(event: Parameters<Handler>[0]) {
+  const auth = event.headers.authorization || event.headers.Authorization || "";
+  return (event.headers["x-api-key"] || event.headers["X-API-Key"] || auth.replace(/^Bearer\s+/i, "")).trim();
+}
+
+function authorized(event: Parameters<Handler>[0]) {
+  const key = getApiKey(event);
   const configured = apiKeys();
-  if (!configured.length) return false;
-  const header = event.headers.authorization || event.headers.Authorization || "";
-  const bearer = header.replace(/^Bearer\s+/i, "").trim();
-  const key = event.headers["x-api-key"] || event.headers["X-API-Key"] || bearer;
   return Boolean(key && configured.includes(key));
+}
+
+function ownerId(key: string) {
+  return `api:${createHash("sha256").update(key).digest("hex").slice(0, 32)}`;
 }
 
 function provider(value: unknown): Provider {
   const normalized = String(value || "veo").toLowerCase();
-  if (normalized !== "veo" && normalized !== "pixverse") {
-    throw new Error("provider doit être 'veo' ou 'pixverse'.");
-  }
+  if (normalized !== "veo" && normalized !== "pixverse") throw new Error("provider doit être 'veo' ou 'pixverse'.");
   return normalized;
+}
+
+function makePrompts(body: any, providerName: Provider) {
+  if (Array.isArray(body.clips) && body.clips.length) {
+    const prompts = body.clips.map((c: any) => typeof c === "string" ? c.trim() : String(c?.prompt || "").trim()).filter(Boolean);
+    if (!prompts.length) throw new Error("clips ne contient aucun prompt valide.");
+    return prompts.slice(0, MAX_CLIPS);
+  }
+
+  const duration = Math.max(1, Math.min(MAX_DURATION_SECONDS, Math.ceil(Number(body.durationSeconds ?? body.duration ?? 8))));
+  const sceneSeconds = providerName === "pixverse" ? 15 : 8;
+  const count = Math.min(MAX_CLIPS, Math.ceil(duration / sceneSeconds));
+  return Array.from({ length: count }, (_, i) => `${String(body.prompt).trim()}\nScène ${i + 1}/${count}. Continuité visuelle avec les scènes précédentes.`);
+}
+
+async function startClip(providerName: Provider, prompt: string, body: any) {
+  if (providerName === "veo") {
+    return createVeoVideo({
+      prompt,
+      aspectRatio: body.aspectRatio === "9:16" ? "9:16" : "16:9",
+      resolution: ["720p", "1080p", "4k"].includes(body.resolution) ? body.resolution : "720p",
+    });
+  }
+  return createPixVerseVideo({
+    prompt,
+    model: body.model === "c1" ? "c1" : "v6",
+    duration: Math.max(1, Math.min(15, Math.floor(Number(body.sceneDurationSeconds ?? 15)))),
+    quality: ["360p", "540p", "720p", "1080p"].includes(body.quality) ? body.quality : "720p",
+    aspectRatio: body.aspectRatio || "9:16",
+    generateAudio: typeof body.generateAudio === "boolean" ? body.generateAudio : undefined,
+    generateMultiClip: typeof body.generateMultiClip === "boolean" ? body.generateMultiClip : undefined,
+  });
 }
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(204, null);
-  if (!authorized(event)) {
-    return json(401, { success: false, error: "API key FruityStory invalide ou non configurée." });
-  }
+  if (!authorized(event)) return json(401, { success: false, error: "API key FruityStory invalide ou non configurée." });
 
   const path = (event.path || "").replace(/^.*\/provider-api\/?/, "").replace(/^\/api\/v1\/?/, "").split("/").filter(Boolean);
+  const key = getApiKey(event);
+  const userId = ownerId(key);
 
   try {
     if (event.httpMethod === "GET" && path[0] === "providers") {
-      return json(200, {
-        success: true,
-        providers: [
-          { id: "veo", name: "Google Veo", capabilities: ["text-to-video", "image-to-video"] },
-          { id: "pixverse", name: "PixVerse", capabilities: ["text-to-video"] },
-        ],
-      });
+      return json(200, { success: true, provider: "fruitystory", providers: [
+        { id: "veo", name: "Google Veo", capabilities: ["text-to-video", "multi-clip", "assembly", "retrieval"] },
+        { id: "pixverse", name: "PixVerse", capabilities: ["text-to-video", "multi-clip", "assembly", "retrieval"] },
+      ], limits: { maxDurationSeconds: MAX_DURATION_SECONDS, maxClips: MAX_CLIPS } });
     }
 
-    if (event.httpMethod === "POST" && path[0] === "videos") {
+    if (event.httpMethod === "POST" && path[0] === "videos" && (path[1] === "generations" || !path[1])) {
       const body = event.body ? JSON.parse(event.body) : {};
       const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
-      if (!prompt) return json(400, { success: false, error: "prompt est obligatoire." });
-
+      if (!prompt && !Array.isArray(body.clips)) return json(400, { success: false, error: "prompt ou clips est obligatoire." });
       const selected = provider(body.provider);
-      if (selected === "veo") {
-        const job = await createVeoVideo({
-          prompt,
-          aspectRatio: body.aspectRatio === "9:16" ? "9:16" : "16:9",
-          resolution: ["720p", "1080p", "4k"].includes(body.resolution) ? body.resolution : "720p",
-        });
-        return json(202, {
-          success: true,
-          provider: "veo",
-          jobId: job.operationName,
-          status: job.status,
-          model: job.model,
-          statusEndpoint: `/api/v1/videos/${encodeURIComponent(job.operationName)}?provider=veo`,
-        });
+      if (selected === "veo" && !process.env.GEMINI_API_KEY) return json(500, { success: false, error: "GEMINI_API_KEY manquante côté serveur." });
+      if (selected === "pixverse" && !process.env.PIXVERSE_API_KEY) return json(500, { success: false, error: "PIXVERSE_API_KEY manquante côté serveur." });
+
+      const prompts = makePrompts(body, selected);
+      const requestedDuration = Number(body.durationSeconds ?? body.duration ?? prompts.length * (selected === "pixverse" ? 15 : 8));
+      if (!Number.isFinite(requestedDuration) || requestedDuration <= 0 || requestedDuration > MAX_DURATION_SECONDS) {
+        return json(400, { success: false, error: `durationSeconds doit être compris entre 1 et ${MAX_DURATION_SECONDS}.` });
       }
 
-      const job = await createPixVerseVideo({
-        prompt,
-        model: body.model === "c1" ? "c1" : "v6",
-        duration: Number(body.duration ?? 5),
-        quality: ["360p", "540p", "720p", "1080p"].includes(body.quality) ? body.quality : "720p",
-        aspectRatio: body.aspectRatio || "9:16",
-        generateAudio: typeof body.generateAudio === "boolean" ? body.generateAudio : undefined,
-        generateMultiClip: typeof body.generateMultiClip === "boolean" ? body.generateMultiClip : undefined,
-      });
-      return json(202, {
-        success: true,
-        provider: "pixverse",
-        jobId: job.videoId,
-        status: job.status,
-        model: job.model,
-        statusEndpoint: `/api/v1/videos/${encodeURIComponent(job.videoId)}?provider=pixverse`,
-      });
+      const clips: any[] = [];
+      for (let index = 0; index < prompts.length; index++) {
+        const job = await startClip(selected, prompts[index], body);
+        clips.push({ index, prompt: prompts[index], operationId: selected === "veo" ? job.operationName : job.videoId, status: "queued" });
+      }
+
+      const jobId = randomUUID();
+      await redis.set(`video-job:${jobId}`, {
+        jobId, userId, tier: "api", provider: selected,
+        model: selected === "veo" ? (process.env.GEMINI_VIDEO_MODEL || "veo-3.1-generate-preview") : (body.model === "c1" ? "c1" : "v6"),
+        status: "queued", prompt: prompt || "multi-clip", clips,
+        requestedDurationSeconds: requestedDuration, completedClipUrls: [], createdAt: new Date().toISOString(),
+      }, { ex: JOB_TTL });
+      await redis.rpush(QUEUE_KEY, jobId);
+
+      return json(202, { success: true, jobId, provider: selected, status: "queued", clipCount: clips.length, requestedDurationSeconds: requestedDuration,
+        statusEndpoint: `/api/v1/videos/generations/${encodeURIComponent(jobId)}`,
+        retrievalEndpoint: `/api/v1/videos/generations/${encodeURIComponent(jobId)}/download` });
     }
 
-    if (event.httpMethod === "GET" && path[0] === "videos" && path[1]) {
-      const selected = provider(event.queryStringParameters?.provider);
-      if (selected === "veo") {
-        const result = await getVeoVideoStatus(path[1]);
-        return json(200, { success: true, provider: "veo", jobId: path[1], result });
-      }
-      const result = await getPixVerseVideoStatus(path[1]);
-      return json(200, { success: true, provider: "pixverse", jobId: path[1], result });
+    if (event.httpMethod === "GET" && path[0] === "videos" && path[1] === "generations" && path[2]) {
+      const job = await redis.get<any>(`video-job:${path[2]}`);
+      if (!job || job.userId !== userId) return json(404, { success: false, error: "Job introuvable." });
+      return json(200, { success: true, jobId: job.jobId, status: job.status, provider: job.provider,
+        clipCount: job.clips?.length || 0, completedClips: job.clips?.filter((c: any) => c.status === "completed").length || 0,
+        finalVideoUrl: job.finalVideoUrl || null, outputUrl: job.finalVideoUrl || null, error: job.error || null });
     }
 
     return json(404, { success: false, error: "Endpoint API introuvable." });
   } catch (error) {
     console.error("FruityStory Provider API error", error);
-    return json(502, {
-      success: false,
-      error: error instanceof Error ? error.message : "Provider error",
-    });
+    return json(502, { success: false, error: error instanceof Error ? error.message : "Provider error" });
   }
 };
 
