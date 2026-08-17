@@ -10,68 +10,188 @@ const videos = getStore({ name: "fruitystory-videos", consistency: "strong" });
 const QUEUE_KEY = "video-generation-queue";
 const JOB_TTL = 86400;
 
+type ClipJob = {
+  index: number;
+  prompt: string;
+  operationId: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  url?: string;
+  error?: string;
+};
+
 function json(statusCode: number, body: unknown) {
-  return { statusCode, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type, authorization", "Access-Control-Allow-Methods": "POST, OPTIONS" }, body: JSON.stringify(body) };
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "content-type, authorization",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+    },
+    body: JSON.stringify(body),
+  };
+}
+
+function extractVeoUrl(result: any): string | null {
+  return (
+    result?.response?.generatedVideos?.[0]?.video?.uri ||
+    result?.operation?.response?.generatedVideos?.[0]?.video?.uri ||
+    result?.generatedVideos?.[0]?.video?.uri ||
+    null
+  );
+}
+
+async function releaseReservationIfNeeded(job: any) {
+  if (job.quotaReleased || !job.quotaKey) return;
+  const current = Number((await redis.get<number>(job.quotaKey)) ?? 0);
+  if (current > 0) {
+    await redis.decr(job.quotaKey);
+  }
+  await redis.set(`video-job:${job.jobId}`, { ...job, quotaReleased: true }, { ex: JOB_TTL });
 }
 
 async function processJob(jobId: string) {
   const key = `video-job:${jobId}`;
   const job: any = await redis.get(key);
   if (!job) return { jobId, status: "missing" };
-  if (job.status === "completed" || job.status === "failed") return { jobId, status: job.status };
+  if (job.status === "completed") return { jobId, status: "completed", finalVideoUrl: job.finalVideoUrl };
+  if (job.status === "failed") return { jobId, status: "failed", error: job.error };
 
-  const result = job.provider === "pixverse"
-    ? await getPixVerseVideoStatus(job.operationId)
-    : await getVeoVideoStatus(job.operationId);
-  const status = String((result as any)?.status || "").toLowerCase();
-  const completed = job.provider === "pixverse" ? status === "completed" || Boolean((result as any)?.url) : Boolean((result as any)?.done);
-  const failed = status === "failed" || status === "error" || Boolean((result as any)?.error);
+  const clips: ClipJob[] = Array.isArray(job.clips) ? job.clips : [];
+  if (!clips.length) throw new Error("Job sans clips.");
 
-  if (failed) {
-    await redis.set(key, { ...job, status: "failed", error: (result as any)?.error || "Provider video generation failed" }, { ex: JOB_TTL });
-    return { jobId, status: "failed" };
+  let changed = false;
+  for (let i = 0; i < clips.length; i++) {
+    const clip = clips[i];
+    if (clip.status === "completed") continue;
+
+    const result = job.provider === "pixverse"
+      ? await getPixVerseVideoStatus(clip.operationId)
+      : await getVeoVideoStatus(clip.operationId);
+
+    const status = String((result as any)?.status || "").toLowerCase();
+    const failed =
+      status === "failed" ||
+      status === "error" ||
+      Boolean((result as any)?.error);
+
+    if (failed) {
+      const errorMessage = String((result as any)?.error || `Clip ${i + 1} échoué.`);
+      const failedClips = clips.map((c, index) => index === i ? { ...c, status: "failed" as const, error: errorMessage } : c);
+      const failedJob = { ...job, clips: failedClips, status: "failed", error: errorMessage };
+      await redis.set(key, failedJob, { ex: JOB_TTL });
+      await releaseReservationIfNeeded(failedJob);
+      await redis.lrem(QUEUE_KEY, 0, jobId);
+      return { jobId, status: "failed", error: errorMessage };
+    }
+
+    const completed = job.provider === "pixverse"
+      ? status === "completed" && Boolean((result as any)?.url)
+      : Boolean((result as any)?.done) && Boolean(extractVeoUrl(result));
+
+    if (!completed) {
+      if (clip.status !== "processing") {
+        clips[i] = { ...clip, status: "processing" };
+        changed = true;
+      }
+      continue;
+    }
+
+    const url = job.provider === "pixverse"
+      ? String((result as any).url)
+      : extractVeoUrl(result);
+    if (!url) continue;
+
+    clips[i] = { ...clip, status: "completed", url };
+    changed = true;
   }
-  if (!completed) {
-    await redis.set(key, { ...job, status: "processing" }, { ex: JOB_TTL });
-    return { jobId, status: "processing" };
+
+  if (changed) {
+    await redis.set(key, { ...job, clips, status: "processing" }, { ex: JOB_TTL });
   }
 
-  const url = (result as any)?.url || (result as any)?.videoUrl || (result as any)?.response?.generatedVideos?.[0]?.video?.uri || (result as any)?.operation?.response?.generatedVideos?.[0]?.video?.uri;
-  if (!url) {
-    await redis.set(key, { ...job, status: "failed", error: "Vidéo terminée mais URL introuvable." }, { ex: JOB_TTL });
-    return { jobId, status: "failed" };
+  if (clips.some((clip) => clip.status !== "completed")) {
+    return {
+      jobId,
+      status: "processing",
+      completedClips: clips.filter((clip) => clip.status === "completed").length,
+      totalClips: clips.length,
+    };
   }
 
-  const clips = [...(job.completedClipUrls || []), url];
-  const expected = Array.isArray(job.clips) && job.clips.length ? job.clips.length : 1;
-  if (clips.length < expected) {
-    await redis.set(key, { ...job, status: "processing", completedClipUrls: clips }, { ex: JOB_TTL });
-    return { jobId, status: "processing", clips: clips.length, expected };
+  const clipUrls = clips
+    .sort((a, b) => a.index - b.index)
+    .map((clip) => clip.url)
+    .filter((url): url is string => Boolean(url));
+
+  try {
+    const finalBuffer = await assembleVideoClips(clipUrls);
+    const blobKey = `videos/${job.userId}/${jobId}.mp4`;
+    await videos.set(blobKey, finalBuffer, {
+      metadata: {
+        contentType: "video/mp4",
+        jobId,
+        userId: String(job.userId),
+        provider: String(job.provider),
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+    const siteUrl = process.env.URL || process.env.DEPLOY_PRIME_URL;
+    if (!siteUrl) throw new Error("URL Netlify manquante.");
+
+    const finalVideoUrl = `${siteUrl.replace(/\/$/, "")}/.netlify/functions/video-file?key=${encodeURIComponent(blobKey)}`;
+    await redis.set(
+      key,
+      {
+        ...job,
+        clips,
+        status: "completed",
+        finalVideoUrl,
+        blobKey,
+        completedAt: new Date().toISOString(),
+      },
+      { ex: JOB_TTL },
+    );
+    await redis.lrem(QUEUE_KEY, 0, jobId);
+    return { jobId, status: "completed", finalVideoUrl };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Assemblage vidéo échoué.";
+    const failedJob = { ...job, clips, status: "failed", error: message };
+    await redis.set(key, failedJob, { ex: JOB_TTL });
+    await releaseReservationIfNeeded(failedJob);
+    await redis.lrem(QUEUE_KEY, 0, jobId);
+    return { jobId, status: "failed", error: message };
   }
-
-  const finalBuffer = await assembleVideoClips(clips);
-  const blobKey = `videos/${job.userId}/${jobId}.mp4`;
-  await videos.set(blobKey, finalBuffer, { metadata: { contentType: "video/mp4", jobId, userId: String(job.userId), provider: String(job.provider), createdAt: new Date().toISOString() } });
-
-  const siteUrl = process.env.URL || process.env.DEPLOY_PRIME_URL;
-  if (!siteUrl) throw new Error("URL Netlify manquante.");
-  const finalVideoUrl = `${siteUrl.replace(/\/$/, "")}/.netlify/functions/video-file?key=${encodeURIComponent(blobKey)}`;
-  await redis.set(key, { ...job, status: "completed", finalVideoUrl, blobKey, completedAt: new Date().toISOString() }, { ex: JOB_TTL });
-  await redis.lrem(QUEUE_KEY, 0, jobId);
-  return { jobId, status: "completed", finalVideoUrl };
 }
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(204, null);
   if (event.httpMethod !== "POST") return json(405, { success: false, error: "Utilisez POST." });
+
   let body: any = {};
-  try { body = event.body ? JSON.parse(event.body) : {}; } catch { return json(400, { success: false, error: "JSON invalide." }); }
+  try {
+    body = event.body ? JSON.parse(event.body) : {};
+  } catch {
+    return json(400, { success: false, error: "JSON invalide." });
+  }
 
   const requested = typeof body.jobId === "string" ? [body.jobId] : [];
   const ids = requested.length ? requested : ((await redis.lrange<string>(QUEUE_KEY, 0, 9)) || []);
   const processed = [];
+
   for (const id of ids) {
-    try { processed.push(await processJob(id)); } catch (error) { processed.push({ jobId: id, status: "error", error: error instanceof Error ? error.message : "Worker error" }); }
+    try {
+      processed.push(await processJob(id));
+    } catch (error) {
+      processed.push({
+        jobId: id,
+        status: "error",
+        error: error instanceof Error ? error.message : "Worker error",
+      });
+    }
   }
+
   return json(200, { success: true, processed });
 };
