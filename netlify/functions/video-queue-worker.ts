@@ -1,10 +1,12 @@
 import type { Handler } from "@netlify/functions";
 import { Redis } from "@upstash/redis";
+import { getStore } from "@netlify/blobs";
 import { getVeoVideoStatus } from "./providers/veo";
 import { getPixVerseVideoStatus } from "./providers/pixverse";
 import { assembleVideoClips } from "./lib/assemble-video";
 
 const redis = Redis.fromEnv();
+const videos = getStore({ name: "fruitystory-videos", consistency: "strong" });
 const QUEUE_KEY = "video-generation-queue";
 const JOB_TTL = 86400;
 
@@ -18,31 +20,22 @@ async function processJob(jobId: string) {
   if (!job) return { skipped: true, reason: "job_not_found" };
   if (job.status === "completed" || job.status === "failed") return { skipped: true, reason: job.status };
 
-  const result = job.provider === "pixverse"
-    ? await getPixVerseVideoStatus(job.operationId)
-    : await getVeoVideoStatus(job.operationId);
-
+  const result = job.provider === "pixverse" ? await getPixVerseVideoStatus(job.operationId) : await getVeoVideoStatus(job.operationId);
   const status = String((result as any)?.status || "").toLowerCase();
-  const completed = job.provider === "pixverse"
-    ? status === "completed" || status === "succeeded" || Boolean((result as any)?.url)
-    : Boolean((result as any)?.done);
+  const completed = job.provider === "pixverse" ? status === "completed" || status === "succeeded" || Boolean((result as any)?.url) : Boolean((result as any)?.done);
   const failed = status === "failed" || status === "error" || Boolean((result as any)?.error);
 
   if (failed) {
     await redis.set(key, { ...job, status: "failed", error: (result as any)?.error || "Provider video generation failed" }, { ex: JOB_TTL });
     return { jobId, status: "failed" };
   }
-
   if (!completed) {
     await redis.set(key, { ...job, status: "processing" }, { ex: JOB_TTL });
     return { jobId, status: "processing" };
   }
 
   const url = (result as any)?.url || (result as any)?.videoUrl || (result as any)?.operation?.response?.generatedVideos?.[0]?.video?.uri;
-  if (!url) {
-    await redis.set(key, { ...job, status: "failed", error: "Vidéo terminée mais URL introuvable." }, { ex: JOB_TTL });
-    return { jobId, status: "failed" };
-  }
+  if (!url) throw new Error("Vidéo terminée mais URL introuvable.");
 
   const clips = [...(job.completedClipUrls || []), url];
   const expected = Array.isArray(job.clips) && job.clips.length ? job.clips.length : 1;
@@ -52,14 +45,19 @@ async function processJob(jobId: string) {
   }
 
   const finalBuffer = await assembleVideoClips(clips);
-  // Le worker produit le MP4 final. Le stockage persistant doit être fourni par le runtime/app.
-  // On encode ici une URL data uniquement pour les petits tests; en production, remplacer par Netlify Blobs/S3.
-  const finalDataUrl = `data:video/mp4;base64,${finalBuffer.toString("base64")}`;
-  await redis.set(key, { ...job, status: "completed", finalVideoUrl: finalDataUrl, completedAt: new Date().toISOString() }, { ex: JOB_TTL });
-  return { jobId, status: "completed", finalVideoUrl: finalDataUrl };
+  const blobKey = `videos/${job.userId}/${jobId}.mp4`;
+  await videos.set(blobKey, finalBuffer, { metadata: { contentType: "video/mp4", jobId, userId: String(job.userId), provider: String(job.provider), createdAt: new Date().toISOString() } });
+
+  const siteUrl = process.env.URL || process.env.DEPLOY_PRIME_URL;
+  if (!siteUrl) throw new Error("URL Netlify manquante.");
+  const finalVideoUrl = `${siteUrl.replace(/\/$/, "")}/.netlify/functions/video-file?key=${encodeURIComponent(blobKey)}`;
+
+  await redis.set(key, { ...job, status: "completed", finalVideoUrl, blobKey, completedAt: new Date().toISOString() }, { ex: JOB_TTL });
+  return { jobId, status: "completed", finalVideoUrl };
 }
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return json(204, null);
   if (event.httpMethod !== "POST") return json(405, { success: false, error: "Utilisez POST." });
   let body: any = {};
   try { body = event.body ? JSON.parse(event.body) : {}; } catch { return json(400, { success: false, error: "JSON invalide." }); }
