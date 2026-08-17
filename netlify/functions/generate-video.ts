@@ -1,14 +1,17 @@
 import type { Handler } from "@netlify/functions";
 import { Redis } from "@upstash/redis";
 import { randomUUID } from "node:crypto";
-import { reserveDailyVideoQuota, releaseDailyVideoQuota, MAX_PER_DAY } from "./lib/atomic-video-quota";
+import { reserveDailyVideoQuota, releaseDailyVideoQuota } from "./lib/atomic-video-quota";
+import { getSubscriptionPlan, type SubscriptionTier } from "./lib/subscription-plans";
+import { getUserSubscriptionTier } from "./lib/subscription-access";
+import { assertVideoProviderAllowed } from "./lib/video-quota";
 import { createVeoVideo } from "./providers/veo";
 import { createPixVerseVideo } from "./providers/pixverse";
 
 const redis = Redis.fromEnv();
 const QUEUE_KEY = "video-generation-queue";
 const JOB_TTL = 86400;
-const MAX_CLIPS_PER_VIDEO = 20;
+const MAX_PROVIDER_CLIPS = 120;
 
 type ClipJob = {
   index: number;
@@ -40,7 +43,7 @@ function getUserId(event: Parameters<Handler>[0], body: any) {
   return value.trim() || null;
 }
 
-function getClipPrompts(body: any, prompt: string): string[] {
+function getClipPrompts(body: any, prompt: string, maxScenes: number): string[] {
   if (!Array.isArray(body.clips) || body.clips.length === 0) return [prompt];
   const prompts = body.clips
     .map((clip: unknown) => {
@@ -52,10 +55,19 @@ function getClipPrompts(body: any, prompt: string): string[] {
     })
     .filter(Boolean);
   if (!prompts.length) throw new Error("clips ne contient aucun prompt valide.");
-  if (prompts.length > MAX_CLIPS_PER_VIDEO) {
-    throw new Error(`Une vidéo peut contenir au maximum ${MAX_CLIPS_PER_VIDEO} clips.`);
+  if (prompts.length > Math.min(maxScenes, MAX_PROVIDER_CLIPS)) {
+    throw new Error(`Ce forfait autorise au maximum ${Math.min(maxScenes, MAX_PROVIDER_CLIPS)} scènes.`);
   }
   return prompts;
+}
+
+function getSeconds(body: any, plan: ReturnType<typeof getSubscriptionPlan>) {
+  const seconds = Number(body.seconds ?? 8);
+  if (!Number.isFinite(seconds) || seconds <= 0) throw new Error("seconds invalide.");
+  if (plan.maxSceneDurationSeconds && seconds > plan.maxSceneDurationSeconds) {
+    throw new Error(`Une scène ne peut pas dépasser ${plan.maxSceneDurationSeconds} secondes avec ce forfait.`);
+  }
+  return Math.ceil(seconds);
 }
 
 async function startProviderClip(provider: "veo" | "pixverse", prompt: string, body: any) {
@@ -75,8 +87,7 @@ async function startProviderClip(provider: "veo" | "pixverse", prompt: string, b
     quality: body.quality || "720p",
     aspectRatio: body.aspectRatio || "9:16",
     generateAudio: typeof body.generateAudio === "boolean" ? body.generateAudio : undefined,
-    generateMultiClip:
-      typeof body.generateMultiClip === "boolean" ? body.generateMultiClip : undefined,
+    generateMultiClip: typeof body.generateMultiClip === "boolean" ? body.generateMultiClip : undefined,
   });
 }
 
@@ -97,10 +108,23 @@ export const handler: Handler = async (event) => {
   const userId = getUserId(event, body);
   if (!userId) return json(401, { success: false, error: "Utilisateur non authentifié." });
 
+  // The subscription is read server-side. Never trust a plan sent by the browser.
+  const tier: SubscriptionTier = await getUserSubscriptionTier(redis, userId);
+  const plan = getSubscriptionPlan(tier);
+  if (tier === "free") {
+    return json(403, { success: false, error: "Un abonnement actif est nécessaire pour générer une vidéo.", tier });
+  }
+
   const provider = String(body.provider || "veo").toLowerCase() as "veo" | "pixverse";
   if (provider !== "veo" && provider !== "pixverse") {
     return json(400, { success: false, error: "provider doit être 'veo' ou 'pixverse'." });
   }
+  try {
+    assertVideoProviderAllowed(tier, provider);
+  } catch (error) {
+    return json(403, { success: false, error: error instanceof Error ? error.message : "Fournisseur non autorisé.", tier });
+  }
+
   if (provider === "veo" && !process.env.GEMINI_API_KEY) {
     return json(500, { success: false, error: "GEMINI_API_KEY manquante côté serveur." });
   }
@@ -109,23 +133,36 @@ export const handler: Handler = async (event) => {
   }
 
   let clipPrompts: string[];
+  let seconds: number;
   try {
-    clipPrompts = getClipPrompts(body, prompt);
+    clipPrompts = getClipPrompts(body, prompt, plan.maxScenes);
+    seconds = getSeconds(body, plan);
+    const totalSeconds = clipPrompts.length * seconds;
+    if (totalSeconds > plan.maxDurationMinutes * 60) {
+      return json(400, {
+        success: false,
+        error: `La durée totale demandée dépasse la limite de ${plan.maxDurationMinutes} minutes du forfait ${plan.name}.`,
+        tier,
+        maxDurationMinutes: plan.maxDurationMinutes,
+        requestedDurationSeconds: totalSeconds,
+      });
+    }
   } catch (error) {
-    return json(400, { success: false, error: error instanceof Error ? error.message : "Clips invalides." });
+    return json(400, { success: false, error: error instanceof Error ? error.message : "Paramètres vidéo invalides.", tier });
   }
 
-  const quota = await reserveDailyVideoQuota(redis, userId);
+  const quota = await reserveDailyVideoQuota(redis, userId, plan.dailyVideoLimit);
   if (!quota) {
     return json(429, {
       success: false,
-      error: `Quota quotidien atteint : maximum ${MAX_PER_DAY} vidéos par jour.`,
+      error: `Quota quotidien atteint : maximum ${plan.dailyVideoLimit} vidéos par jour.`,
       quota: {
-        videosCreatedToday: MAX_PER_DAY,
-        dailyLimit: MAX_PER_DAY,
+        videosCreatedToday: plan.dailyVideoLimit,
+        dailyLimit: plan.dailyVideoLimit,
         remaining: 0,
         resetDate: new Date().toISOString().slice(0, 10),
       },
+      tier,
     });
   }
 
@@ -133,21 +170,17 @@ export const handler: Handler = async (event) => {
   try {
     const clips: ClipJob[] = [];
     for (let index = 0; index < clipPrompts.length; index++) {
-      const job = await startProviderClip(provider, clipPrompts[index], body);
+      const job = await startProviderClip(provider, clipPrompts[index], { ...body, seconds });
       const operationId = provider === "veo" ? job.operationName : job.videoId;
-      clips.push({
-        index,
-        prompt: clipPrompts[index],
-        operationId,
-        status: "queued",
-      });
+      clips.push({ index, prompt: clipPrompts[index], operationId, status: "queued" });
     }
 
     const record = {
       jobId,
       userId,
+      tier,
       provider,
-      model: clips.length === 1 ? (provider === "veo" ? process.env.GEMINI_VIDEO_MODEL || "veo-3.1-generate-preview" : body.model === "c1" ? "c1" : "v6") : body.model || "multi-clip",
+      model: provider === "veo" ? process.env.GEMINI_VIDEO_MODEL || "veo-3.1-generate-preview" : body.model === "c1" ? "c1" : "v6",
       status: "queued",
       prompt,
       clips,
@@ -163,12 +196,14 @@ export const handler: Handler = async (event) => {
       success: true,
       jobId,
       provider,
+      tier,
       status: "queued",
       clipCount: clips.length,
+      creditsIncluded: plan.credits,
       quota: {
         videosCreatedToday: quota.count,
-        dailyLimit: MAX_PER_DAY,
-        remaining: MAX_PER_DAY - quota.count,
+        dailyLimit: plan.dailyVideoLimit,
+        remaining: plan.dailyVideoLimit - quota.count,
         resetDate: quota.resetDate,
       },
     });
@@ -178,6 +213,7 @@ export const handler: Handler = async (event) => {
     return json(502, {
       success: false,
       error: "Le fournisseur vidéo n'a pas accepté la génération. Le quota a été restauré.",
+      tier,
     });
   }
 };
