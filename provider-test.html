@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FruityStory — Test API vidéo IA</title>
+  <style>
+    body{font-family:system-ui,sans-serif;background:#0b1712;color:#f2fff7;max-width:900px;margin:auto;padding:24px}main{background:#10231a;border:1px solid #244735;border-radius:18px;padding:24px}input,textarea,select,button{width:100%;box-sizing:border-box;margin:8px 0;padding:12px;border-radius:10px;border:1px solid #365c47;background:#09140f;color:#fff}button{cursor:pointer;font-weight:700}button:hover{background:#183b29}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.status{white-space:pre-wrap;background:#07100b;padding:14px;border-radius:10px;margin-top:14px}.ok{border-left:4px solid #52d68b}.err{border-left:4px solid #ff6b6b}video{width:100%;max-height:520px;border-radius:14px;margin-top:16px;background:#000}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>FruityStory — test fournisseur API vidéo IA</h1>
+  <p>Cette page teste la clé API FruityStory et demande au serveur de lancer une vraie génération vidéo. Les clés Gemini/PixVerse restent uniquement côté serveur.</p>
+  <label>Clé API FruityStory</label>
+  <input id="key" type="password" autocomplete="off" placeholder="fs_...">
+  <label>Prompt</label>
+  <textarea id="prompt" rows="4">Un verger tropical au lever du soleil, caméra cinématique en mouvement, feuilles animées par une légère brise, rendu réaliste.</textarea>
+  <div class="grid">
+    <div><label>Fournisseur</label><select id="provider"><option value="veo">Google Veo</option><option value="pixverse">PixVerse</option></select></div>
+    <div><label>Format</label><select id="ratio"><option>16:9</option><option>9:16</option></select></div>
+  </div>
+  <button onclick="testHealth()">1. Tester les clés fournisseurs</button>
+  <button onclick="generate()">2. Générer une vraie vidéo IA</button>
+  <div id="status" class="status">Prêt pour le test.</div>
+  <video id="video" controls hidden></video>
+</main>
+<script>
+const $=id=>document.getElementById(id); const show=(x,ok=true)=>{$('status').textContent=typeof x==='string'?x:JSON.stringify(x,null,2);$('status').className='status '+(ok?'ok':'err')};
+async function testHealth(){show('Test des fournisseurs en cours...');try{const r=await fetch('/api/health/providers');const d=await r.json();show(d,r.ok&&d.overall!=='failed')}catch(e){show('Erreur réseau: '+e.message,false)}}
+async function generate(){const key=$('key').value.trim();if(!key)return show('Entre la clé API FruityStory pour ce test.',false);show('Création du job vidéo...');$('video').hidden=true;try{const r=await fetch('/api/v1/videos/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({prompt:$('prompt').value,provider:$('provider').value,aspectRatio:$('ratio').value,duration:8})});const d=await r.json();show(d,r.ok);if(!r.ok)return; if(d.outputUrl){$('video').src=d.outputUrl;$('video').hidden=false;return;} if(d.jobId) poll(d.jobId,key)}catch(e){show('Erreur réseau: '+e.message,false)}}
+async function poll(id,key){for(let i=0;i<60;i++){await new Promise(r=>setTimeout(r,5000));const r=await fetch('/api/v1/videos/generations/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+key}});const d=await r.json();show(d,r.ok);if(d.outputUrl){$('video').src=d.outputUrl;$('video').hidden=false;return}if(d.status==='failed')return}show('Le job est toujours en cours après 5 minutes. Vérifie son statut dans l’API.',true)}
+</script>
+</body></html>
