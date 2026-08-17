@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { resolveFfmpeg } from "../bin/ffmpeg";
 
 const execFileAsync = promisify(execFile);
 
@@ -10,6 +11,7 @@ const execFileAsync = promisify(execFile);
 export async function assembleVideoClips(clipUrls: string[]): Promise<Buffer> {
   if (!clipUrls.length) throw new Error("Aucun clip à assembler.");
 
+  const ffmpeg = await resolveFfmpeg();
   const dir = await mkdtemp(path.join(tmpdir(), "fruitystory-assemble-"));
   try {
     const files: string[] = [];
@@ -25,7 +27,7 @@ export async function assembleVideoClips(clipUrls: string[]): Promise<Buffer> {
     await writeFile(concatFile, files.map((f) => `file '${f.replaceAll("'", "'\\''")}'`).join("\n"));
 
     const output = path.join(dir, "final.mp4");
-    await execFileAsync("ffmpeg", ["-y", "-f", "concat", "-safe", "0", "-i", concatFile, "-c", "copy", "-movflags", "+faststart", output]);
+    await execFileAsync(ffmpeg, ["-y", "-f", "concat", "-safe", "0", "-i", concatFile, "-c", "copy", "-movflags", "+faststart", output]);
     return await readFile(output);
   } finally {
     await rm(dir, { recursive: true, force: true });
