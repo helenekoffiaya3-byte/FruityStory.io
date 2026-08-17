@@ -1,77 +1,57 @@
-export type SubscriptionTier = "free" | "premium" | "supreme" | "ultra_premium";
+import { getSubscriptionPlan, type SubscriptionTier } from "./subscription-plans";
+
+export type { SubscriptionTier } from "./subscription-plans";
 export type VideoProvider = "veo" | "pixverse";
 
 export const ULTRA_PREMIUM_VIDEO_POLICY = {
-  tier: "ultra_premium" as const,
-  dailyQuota: 20 as const,
-  credits: "unlimited" as const,
+  tier: "ultra_pro" as const,
+  dailyQuota: 40 as const,
+  credits: 19000 as const,
   providers: ["veo", "pixverse"] as VideoProvider[],
 };
 
 export function getVideoQuotaPolicy(tier: SubscriptionTier) {
-  if (tier === "ultra_premium") return ULTRA_PREMIUM_VIDEO_POLICY;
-
+  const plan = getSubscriptionPlan(tier);
   return {
     tier,
-    dailyQuota: "subscription_managed" as const,
-    credits: "subscription_managed" as const,
-    providers: [] as VideoProvider[],
+    dailyQuota: plan.dailyVideoLimit,
+    credits: plan.credits,
+    maxDurationMinutes: plan.maxDurationMinutes,
+    maxScenes: plan.maxScenes,
+    maxSceneDurationSeconds: plan.maxSceneDurationSeconds,
+    providers: plan.providers,
   };
 }
 
-export function assertVideoProviderAllowed(
-  tier: SubscriptionTier,
-  provider: VideoProvider,
-) {
-  if (tier !== "ultra_premium") {
-    throw new Error("Video generation with Veo/PixVerse requires Ultra Premium");
-  }
-
-  if (!ULTRA_PREMIUM_VIDEO_POLICY.providers.includes(provider)) {
-    throw new Error("Video provider is not available for Ultra Premium");
+export function assertVideoProviderAllowed(tier: SubscriptionTier, provider: VideoProvider) {
+  const policy = getVideoQuotaPolicy(tier);
+  if (!policy.providers.includes(provider)) {
+    throw new Error(`Le fournisseur ${provider} n'est pas disponible pour le forfait ${tier}.`);
   }
 }
 
-export function hasUnlimitedVideoCredits(tier: SubscriptionTier) {
-  return tier === "ultra_premium";
+export function hasUnlimitedVideoCredits(_tier: SubscriptionTier) {
+  return false;
 }
 
-/**
- * Checks the real daily quota for one user.
- * `videosCreatedToday` must come from persistent server-side storage.
- */
-export function hasVideoQuotaRemaining(
-  tier: SubscriptionTier,
-  videosCreatedToday: number,
-) {
-  if (tier !== "ultra_premium") return false;
-  return videosCreatedToday < ULTRA_PREMIUM_VIDEO_POLICY.dailyQuota;
+export function hasVideoQuotaRemaining(tier: SubscriptionTier, videosCreatedToday: number) {
+  return videosCreatedToday < getVideoQuotaPolicy(tier).dailyQuota;
 }
 
-export function assertVideoQuotaRemaining(
-  tier: SubscriptionTier,
-  videosCreatedToday: number,
-) {
-  if (!hasVideoQuotaRemaining(tier, videosCreatedToday)) {
-    throw new Error("Quota vidéo Ultra Premium atteinte : maximum 20 vidéos par jour.");
+export function assertVideoQuotaRemaining(tier: SubscriptionTier, videosCreatedToday: number) {
+  const limit = getVideoQuotaPolicy(tier).dailyQuota;
+  if (limit <= 0 || videosCreatedToday >= limit) {
+    throw new Error(`Quota vidéo atteint : maximum ${limit} vidéos par jour.`);
   }
 }
 
-/**
- * Redis key for the persistent per-user daily counter.
- * The date in the key automatically creates a fresh quota every day.
- */
 export function getDailyVideoQuotaKey(userId: string, date = new Date()) {
   const day = date.toISOString().slice(0, 10);
   return `video-quota:${userId}:${day}`;
 }
 
-/**
- * Atomically reserve one daily generation with Upstash Redis.
- * The caller must provide the result of Redis INCR.
- */
-export function assertAtomicDailyReservation(countAfterIncrement: number) {
-  if (countAfterIncrement > ULTRA_PREMIUM_VIDEO_POLICY.dailyQuota) {
-    throw new Error("Quota vidéo Ultra Premium atteinte : maximum 20 vidéos par jour.");
+export function assertAtomicDailyReservation(countAfterIncrement: number, dailyQuota = ULTRA_PREMIUM_VIDEO_POLICY.dailyQuota) {
+  if (countAfterIncrement > dailyQuota) {
+    throw new Error(`Quota vidéo atteint : maximum ${dailyQuota} vidéos par jour.`);
   }
 }
