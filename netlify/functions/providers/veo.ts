@@ -15,7 +15,6 @@ export async function createVeoVideo(params: {
   resolution?: "720p" | "1080p" | "4k";
 }) {
   const ai = getClient();
-
   const operation = await ai.models.generateVideos({
     model: VEO_MODEL,
     prompt: params.prompt,
@@ -44,11 +43,7 @@ export async function getVeoVideoStatus(operationName: string) {
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/${operationName}`,
-    {
-      headers: {
-        "x-goog-api-key": apiKey,
-      },
-    },
+    { headers: { "x-goog-api-key": apiKey } },
   );
 
   if (!response.ok) {
