@@ -4,7 +4,6 @@ import { randomUUID } from "node:crypto";
 import { reserveDailyVideoQuota, releaseDailyVideoQuota, MAX_PER_DAY } from "./lib/atomic-video-quota";
 import { createVeoVideo } from "./providers/veo";
 import { createPixVerseVideo } from "./providers/pixverse";
-import { getVerifiedSubscription } from "./lib/stripe-subscription";
 
 const redis = Redis.fromEnv();
 const QUEUE_KEY = "video-generation-queue";
@@ -24,11 +23,6 @@ export const handler: Handler = async (event) => {
   const userId = getUserId(event, body);
   if (!userId) return json(401, { success: false, error: "Utilisateur non authentifié." });
 
-  let subscription;
-  try { subscription = await getVerifiedSubscription(userId); }
-  catch (error) { console.error("Stripe subscription verification failed", error); return json(503, { success: false, error: "Vérification de l'abonnement indisponible." }); }
-  if (!subscription || subscription.plan !== "ultra_premium") return json(403, { success: false, error: "Un abonnement Ultra Premium actif est requis." });
-
   const provider = String(body.provider || "veo").toLowerCase();
   if (provider !== "veo" && provider !== "pixverse") return json(400, { success: false, error: "provider doit être 'veo' ou 'pixverse'." });
   if (provider === "veo" && !process.env.GEMINI_API_KEY) return json(500, { success: false, error: "GEMINI_API_KEY manquante côté serveur." });
@@ -46,7 +40,7 @@ export const handler: Handler = async (event) => {
     const record = { jobId, userId, provider, model: job.model, operationId, status: "queued", prompt, clips: body.clips || [jobId], completedClipUrls: [], quotaKey: quota.key, createdAt: new Date().toISOString() };
     await redis.set(`video-job:${jobId}`, record, { ex: JOB_TTL });
     await redis.rpush(QUEUE_KEY, jobId);
-    return json(200, { success: true, jobId, provider: job.provider, model: job.model, job, status: "queued", subscription: { plan: subscription.plan, status: subscription.status }, quota: { videosCreatedToday: quota.count, dailyLimit: MAX_PER_DAY, remaining: MAX_PER_DAY - quota.count, resetDate: quota.resetDate } });
+    return json(200, { success: true, jobId, provider: job.provider, model: job.model, job, status: "queued", quota: { videosCreatedToday: quota.count, dailyLimit: MAX_PER_DAY, remaining: MAX_PER_DAY - quota.count, resetDate: quota.resetDate } });
   } catch (error) {
     await releaseDailyVideoQuota(redis, quota.key);
     console.error(`${provider} generation failed:`, error);
