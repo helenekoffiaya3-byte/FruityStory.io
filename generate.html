@@ -1,163 +1,20 @@
 <!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FruityStory.io — Générer</title>
-  <link rel="stylesheet" href="/styles.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FruityStory.io — Générer</title><link rel="stylesheet" href="/styles.css"></head>
 <body>
-<header class="topbar">
-  <a class="brand" href="/">🍎 FruityStory.io</a>
-  <nav>
-    <a href="/dashboard.html">Profil</a>
-    <a href="/studio.html">Studio</a>
-    <a href="/publish.html">Publier</a>
-  </nav>
-</header>
-
-<main class="page">
-  <span class="eyebrow">GÉNÉRATION IA</span>
-  <h1>Génère ta première vidéo</h1>
-  <p>Crée un drama de fruits joué comme la vie réelle : dialogues et actions, sans narration.</p>
-
-  <form class="generator" id="generatePageForm">
-    <label>
-      Idée du drama
-      <textarea id="storyPrompt" required rows="7" placeholder="Ex. Pomito, garçon inspiré d’une pomme, rencontre Bananita dans un café et ils découvrent un secret..."></textarea>
-    </label>
-
-    <div class="form-grid">
-      <label>
-        Référence fruit
-        <select id="fruit">
-          <option>Pomme</option>
-          <option>Banane</option>
-          <option>Fraise</option>
-          <option>Cerise</option>
-          <option>Orange</option>
-          <option>Pastèque</option>
-          <option>Autre fruit</option>
-        </select>
-      </label>
-
-      <label>
-        Format
-        <select id="format">
-          <option>9:16</option>
-          <option>16:9</option>
-          <option>1:1</option>
-        </select>
-      </label>
-    </div>
-
-    <label>
-      Nom du personnage
-      <input id="characterName" placeholder="Ex. Pomito, Pomita, Banano, Bananita…">
-    </label>
-
-    <p class="message">Le nom peut être librement inspiré du fruit : aucune terminaison obligatoire.</p>
-
-    <button class="btn primary" id="generatePageButton" type="submit">
-      ✨ Préparer les scènes avec l’IA
-    </button>
-
-    <p id="status" class="message" role="status" aria-live="polite"></p>
-
-    <section id="storyOutput" class="panel" hidden aria-live="polite"></section>
-  </form>
-</main>
-
-<footer>© 2026 FruityStory.io</footer>
-
+<header class="topbar"><a class="brand" href="/">🍎 FruityStory.io</a><nav><a href="/dashboard.html">Profil</a><a href="/studio.html">Studio</a><a href="/publish.html">Publier</a></nav></header>
+<main class="page"><span class="eyebrow">GÉNÉRATION IA</span><h1>Génère ta vidéo</h1><p>Crée un drama de fruits avec dialogues et actions, puis génère la vidéo avec Veo ou PixVerse.</p>
+<form class="generator" id="generatePageForm">
+<label>Idée du drama<textarea id="storyPrompt" required rows="7" placeholder="Ex. Pomito rencontre Bananita dans un café..."></textarea></label>
+<div class="form-grid"><label>Fournisseur vidéo<select id="provider"><option value="veo">Google Veo</option><option value="pixverse">PixVerse</option></select></label><label>Format<select id="format"><option>9:16</option><option>16:9</option><option>1:1</option></select></label></div>
+<div class="form-grid"><label>Référence fruit<select id="fruit"><option>Pomme</option><option>Banane</option><option>Fraise</option><option>Cerise</option><option>Orange</option><option>Pastèque</option><option>Autre fruit</option></select></label><label>Nom du personnage<input id="characterName" placeholder="Ex. Pomito"></label></div>
+<button class="btn primary" id="prepareButton" type="submit">✨ Préparer les scènes</button><button class="btn primary" id="videoButton" type="button" disabled>🎬 Générer la vidéo</button>
+<p id="status" class="message" role="status" aria-live="polite"></p><section id="storyOutput" class="panel" hidden></section><section id="videoOutput" class="panel" hidden></section>
+</form></main><footer>© 2026 FruityStory.io</footer>
 <script type="module">
-  const form = document.querySelector('#generatePageForm');
-  const button = document.querySelector('#generatePageButton');
-  const status = document.querySelector('#status');
-  const output = document.querySelector('#storyOutput');
-
-  form?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const prompt = document.querySelector('#storyPrompt')?.value?.trim() || '';
-    const fruit = document.querySelector('#fruit')?.value || '';
-    const characterName = document.querySelector('#characterName')?.value?.trim() || '';
-    const format = document.querySelector('#format')?.value || '9:16';
-
-    if (!prompt) return;
-
-    button.disabled = true;
-    status.textContent = '🤖 Préparation du drama…';
-    output.hidden = true;
-    output.innerHTML = '';
-
-    const enrichedPrompt = [
-      prompt,
-      fruit ? `Fruit de référence : ${fruit}.` : '',
-      characterName ? `Nom souhaité : ${characterName}.` : '',
-      `Format vidéo souhaité : ${format}.`
-    ].filter(Boolean).join('\n');
-
-    try {
-      const response = await fetch('/.netlify/functions/generate-story', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: enrichedPrompt })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success || !data.story) {
-        throw new Error(data.error || 'Impossible de générer le drama.');
-      }
-
-      const story = data.story;
-      sessionStorage.setItem('fruitystory:lastStory', JSON.stringify({ ...data, format }));
-
-      output.innerHTML = `
-        <h2>${escapeHtml(story.title)}</h2>
-        <h3>Personnages</h3>
-        ${story.characters.map(character => `
-          <article class="story-character">
-            <h4>${escapeHtml(character.name)}</h4>
-            <p><b>Fruit :</b> ${escapeHtml(character.fruit)}</p>
-            <p><b>Apparence :</b> ${escapeHtml(character.appearance)}</p>
-            <p><b>Vêtements :</b> ${escapeHtml(character.clothing)}</p>
-            <p><b>Personnalité :</b> ${escapeHtml(character.personality)}</p>
-          </article>
-        `).join('')}
-        <h3>Scènes</h3>
-        ${story.scenes.map((scene, index) => `
-          <article class="story-scene">
-            <h4>Scène ${index + 1} — ${escapeHtml(scene.location)}</h4>
-            <p>${escapeHtml(scene.description)}</p>
-            ${scene.dialogues.map(dialogue => `
-              <p><b>${escapeHtml(dialogue.characterId)}</b> : ${escapeHtml(dialogue.text)}</p>
-            `).join('')}
-          </article>
-        `).join('')}
-      `;
-
-      output.hidden = false;
-      status.textContent = `✅ ${story.scenes.length} scène(s) préparée(s).`;
-    } catch (error) {
-      console.error(error);
-      status.textContent = error instanceof Error
-        ? error.message
-        : 'Une erreur est survenue.';
-    } finally {
-      button.disabled = false;
-    }
-  });
-
-  function escapeHtml(value) {
-    return String(value)
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
-  }
-</script>
-</body>
-</html>
+const $=s=>document.querySelector(s); const form=$('#generatePageForm'),prepareButton=$('#prepareButton'),videoButton=$('#videoButton'),status=$('#status'),output=$('#storyOutput'),videoOutput=$('#videoOutput'); let story=null;
+form?.addEventListener('submit',async e=>{e.preventDefault();const prompt=$('#storyPrompt').value.trim();if(!prompt)return;prepareButton.disabled=true;videoButton.disabled=true;status.textContent='🤖 Préparation du drama…';output.hidden=true;const enriched=[prompt,`Fruit de référence : ${$('#fruit').value}.`,$('#characterName').value.trim()?`Nom souhaité : ${$('#characterName').value.trim()}.`:'' ].filter(Boolean).join('\n');try{const r=await fetch('/.netlify/functions/generate-story',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:enriched})});const d=await r.json();if(!r.ok||!d.success||!d.story)throw new Error(d.error||'Impossible de générer le drama.');story=d.story;sessionStorage.setItem('fruitystory:lastStory',JSON.stringify(d));output.innerHTML=`<h2>${h(story.title)}</h2><h3>Personnages</h3>${story.characters.map(c=>`<article><h4>${h(c.name)}</h4><p><b>Fruit :</b> ${h(c.fruit)}</p><p><b>Apparence :</b> ${h(c.appearance)}</p><p><b>Vêtements :</b> ${h(c.clothing)}</p><p><b>Personnalité :</b> ${h(c.personality)}</p></article>`).join('')}<h3>Scènes</h3>${story.scenes.map((s,i)=>`<article><h4>Scène ${i+1} — ${h(s.location)}</h4><p>${h(s.description)}</p>${s.dialogues.map(d=>`<p><b>${h(d.characterId)}</b> : ${h(d.text)}</p>`).join('')}</article>`).join('')}`;output.hidden=false;videoButton.disabled=false;status.textContent=`✅ ${story.scenes.length} scène(s) préparée(s).`;}catch(err){status.textContent=err instanceof Error?err.message:'Une erreur est survenue.';}finally{prepareButton.disabled=false;}});
+videoButton?.addEventListener('click',async()=>{if(!story)return;const userId=localStorage.getItem('fruitystory:userId')||sessionStorage.getItem('fruitystory:userId');if(!userId){status.textContent='Connecte-toi pour générer une vidéo.';return;}videoButton.disabled=true;status.textContent='🎬 Envoi à la file de génération…';videoOutput.hidden=true;try{const provider=$('#provider').value,format=$('#format').value;const r=await fetch('/.netlify/functions/generate-video',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':userId},body:JSON.stringify({userId,subscription:'ultra_premium',provider,aspectRatio:format,prompt:buildPrompt(story),clips:story.scenes.map(s=>s.id)})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Impossible de démarrer la vidéo.');status.textContent=`⏳ Vidéo en cours… ${d.quota.remaining} génération(s) restante(s) aujourd’hui.`;await poll(d.jobId,provider);}catch(err){status.textContent=err instanceof Error?err.message:'Erreur de génération vidéo.';videoButton.disabled=false;}});
+async function poll(jobId,provider){for(let i=0;i<90;i++){await new Promise(r=>setTimeout(r,5000));const r=await fetch(`/.netlify/functions/video-job-status?id=${encodeURIComponent(jobId)}&provider=${encodeURIComponent(provider)}`);const d=await r.json();if(!r.ok)throw new Error(d.error||'Erreur de suivi du job.');if(d.status==='failed')throw new Error(d.error||'La génération vidéo a échoué.');if(d.status==='completed'&&d.finalVideoUrl){videoOutput.innerHTML=`<h3>🎉 Vidéo prête</h3><video controls playsinline style="width:100%;max-width:720px" src="${h(d.finalVideoUrl)}"></video><p><a href="${h(d.finalVideoUrl)}" target="_blank" rel="noopener">Ouvrir la vidéo</a></p>`;videoOutput.hidden=false;status.textContent='✅ Vidéo générée avec succès.';videoButton.disabled=false;return;}status.textContent=`⏳ Génération en cours… (${i+1}/90)`;}throw new Error('La génération continue dans la queue.');}
+function buildPrompt(s){return `${s.title}. Drama de fruits anthropomorphes. Aucun narrateur, aucune voix off. ${s.scenes.map((x,i)=>`Scène ${i+1}: ${x.location}. ${x.description}. Actions: ${(x.actions||[]).join('; ')}. Dialogues: ${(x.dialogues||[]).map(d=>`${d.characterId}: ${d.text} (${d.emotion})`).join(' | ')}`).join(' ')}`;} function h(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
+</script></body></html>
