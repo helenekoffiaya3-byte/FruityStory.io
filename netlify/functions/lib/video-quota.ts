@@ -3,7 +3,7 @@ export type VideoProvider = "veo" | "pixverse";
 
 export const ULTRA_PREMIUM_VIDEO_POLICY = {
   tier: "ultra_premium" as const,
-  quota: 20 as const,
+  dailyQuota: 20 as const,
   credits: "unlimited" as const,
   providers: ["veo", "pixverse"] as VideoProvider[],
 };
@@ -13,7 +13,7 @@ export function getVideoQuotaPolicy(tier: SubscriptionTier) {
 
   return {
     tier,
-    quota: "subscription_managed" as const,
+    dailyQuota: "subscription_managed" as const,
     credits: "subscription_managed" as const,
     providers: [] as VideoProvider[],
   };
@@ -36,13 +36,13 @@ export function hasUnlimitedVideoCredits(tier: SubscriptionTier) {
   return tier === "ultra_premium";
 }
 
-export function hasVideoQuotaRemaining(tier: SubscriptionTier, videosCreated: number) {
+export function hasVideoQuotaRemaining(tier: SubscriptionTier, videosCreatedToday: number) {
   if (tier !== "ultra_premium") return false;
-  return videosCreated < ULTRA_PREMIUM_VIDEO_POLICY.quota;
+  return videosCreatedToday < ULTRA_PREMIUM_VIDEO_POLICY.dailyQuota;
 }
 
-export function assertVideoQuotaRemaining(tier: SubscriptionTier, videosCreated: number) {
-  if (!hasVideoQuotaRemaining(tier, videosCreated)) {
-    throw new Error("Quota vidéo Ultra Premium atteinte : maximum 20 vidéos.");
+export function assertVideoQuotaRemaining(tier: SubscriptionTier, videosCreatedToday: number) {
+  if (!hasVideoQuotaRemaining(tier, videosCreatedToday)) {
+    throw new Error("Quota vidéo Ultra Premium atteinte : maximum 20 vidéos par jour.");
   }
 }
