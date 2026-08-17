@@ -1,25 +1,29 @@
 import { Redis } from "@upstash/redis";
-import { ULTRA_PREMIUM_VIDEO_POLICY, getDailyVideoQuotaKey } from "./video-quota";
+import { getDailyVideoQuotaKey } from "./video-quota";
 
 const QUOTA_TTL_SECONDS = 172800; // 48h
-export const MAX_PER_DAY = ULTRA_PREMIUM_VIDEO_POLICY.dailyQuota;
+export const MAX_PER_DAY = 40;
 
 export type ReservedVideoQuota = {
   key: string;
   count: number;
   resetDate: string;
+  dailyLimit: number;
 };
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Atomically reserves one of the 20 daily Ultra Premium video slots. */
+/** Atomically reserves one daily video slot for the user's active plan. */
 export async function reserveDailyVideoQuota(
   redis: Redis,
   userId: string,
+  dailyLimit: number = MAX_PER_DAY,
 ): Promise<ReservedVideoQuota | null> {
   if (!userId.trim()) throw new Error("userId obligatoire");
+  if (!Number.isInteger(dailyLimit) || dailyLimit < 0) throw new Error("dailyLimit invalide");
+  if (dailyLimit === 0) return null;
 
   const resetDate = todayISO();
   const key = getDailyVideoQuotaKey(userId, new Date(`${resetDate}T00:00:00.000Z`));
@@ -40,22 +44,14 @@ end
 return n
 `,
     [key],
-    [String(MAX_PER_DAY), String(QUOTA_TTL_SECONDS)],
+    [String(dailyLimit), String(QUOTA_TTL_SECONDS)],
   );
 
   if (count === -1) return null;
-
-  return { key, count, resetDate };
+  return { key, count, resetDate, dailyLimit };
 }
 
-/**
- * Restores a reserved slot when the downstream provider rejects/fails
- * before the video job is successfully accepted.
- */
-export async function releaseDailyVideoQuota(
-  redis: Redis,
-  key: string,
-): Promise<void> {
+export async function releaseDailyVideoQuota(redis: Redis, key: string): Promise<void> {
   await redis.eval<number>(
     `
 local key = KEYS[1]
@@ -74,22 +70,14 @@ return next
   );
 }
 
-/**
- * Reserves a slot, runs the real provider operation, and restores the slot
- * automatically if the provider fails before accepting the video job.
- */
 export async function withDailyVideoQuota<T>(
   redis: Redis,
   userId: string,
   startGeneration: (reservation: ReservedVideoQuota) => Promise<T>,
+  dailyLimit: number = MAX_PER_DAY,
 ): Promise<{ reservation: ReservedVideoQuota; result: T }> {
-  const reservation = await reserveDailyVideoQuota(redis, userId);
-
-  if (!reservation) {
-    throw new Error(
-      "Quota vidéo Ultra Premium atteinte : maximum 20 vidéos par jour.",
-    );
-  }
+  const reservation = await reserveDailyVideoQuota(redis, userId, dailyLimit);
+  if (!reservation) throw new Error(`Quota vidéo atteinte : maximum ${dailyLimit} vidéos par jour.`);
 
   try {
     const result = await startGeneration(reservation);
