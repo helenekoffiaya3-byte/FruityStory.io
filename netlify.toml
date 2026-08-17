@@ -20,6 +20,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/video-generation-test"
+  to = "/.netlify/functions/video-generation-test"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/health"
   to = "/.netlify/functions/backend/health"
   status = 200
