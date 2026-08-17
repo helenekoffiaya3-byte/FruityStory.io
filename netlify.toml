@@ -14,6 +14,12 @@
   skip_processing = false
 
 [[redirects]]
+  from = "/api/health/providers"
+  to = "/.netlify/functions/health-providers"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/health"
   to = "/.netlify/functions/backend/health"
   status = 200
