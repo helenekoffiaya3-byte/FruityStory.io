@@ -36,13 +36,42 @@ export function hasUnlimitedVideoCredits(tier: SubscriptionTier) {
   return tier === "ultra_premium";
 }
 
-export function hasVideoQuotaRemaining(tier: SubscriptionTier, videosCreatedToday: number) {
+/**
+ * Checks the real daily quota for one user.
+ * `videosCreatedToday` must come from persistent server-side storage.
+ */
+export function hasVideoQuotaRemaining(
+  tier: SubscriptionTier,
+  videosCreatedToday: number,
+) {
   if (tier !== "ultra_premium") return false;
   return videosCreatedToday < ULTRA_PREMIUM_VIDEO_POLICY.dailyQuota;
 }
 
-export function assertVideoQuotaRemaining(tier: SubscriptionTier, videosCreatedToday: number) {
+export function assertVideoQuotaRemaining(
+  tier: SubscriptionTier,
+  videosCreatedToday: number,
+) {
   if (!hasVideoQuotaRemaining(tier, videosCreatedToday)) {
+    throw new Error("Quota vidéo Ultra Premium atteinte : maximum 20 vidéos par jour.");
+  }
+}
+
+/**
+ * Redis key for the persistent per-user daily counter.
+ * The date in the key automatically creates a fresh quota every day.
+ */
+export function getDailyVideoQuotaKey(userId: string, date = new Date()) {
+  const day = date.toISOString().slice(0, 10);
+  return `video-quota:${userId}:${day}`;
+}
+
+/**
+ * Atomically reserve one daily generation with Upstash Redis.
+ * The caller must provide the result of Redis INCR.
+ */
+export function assertAtomicDailyReservation(countAfterIncrement: number) {
+  if (countAfterIncrement > ULTRA_PREMIUM_VIDEO_POLICY.dailyQuota) {
     throw new Error("Quota vidéo Ultra Premium atteinte : maximum 20 vidéos par jour.");
   }
 }
