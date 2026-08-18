@@ -51,3 +51,13 @@ jobs:
           test -f settings.html
           test -f monetization.html
           test -f promote.html
+
+      - name: Validate FSK developer platform
+        run: |
+          test -f backend/src/developer-platform.ts
+          grep -q "fsk_" backend/src/developer-platform.ts
+          grep -q "fsk_video_" backend/src/developer-platform.ts
+          grep -q "fsk_ai_" backend/src/developer-platform.ts
+          grep -q "fsk_payments_" backend/src/developer-platform.ts
+          grep -q "createDeveloperKey" backend/src/developer-platform.ts
+          grep -q "revokeDeveloperKey" backend/src/developer-platform.ts
