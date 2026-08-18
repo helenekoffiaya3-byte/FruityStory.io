@@ -5,8 +5,8 @@ import { getPlan, type PlanId } from './stripe-plans';
 let client: Stripe | undefined;
 
 export function stripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw Object.assign(new Error('STRIPE_SECRET_KEY is not configured'), { status: 503 });
+  const key = process.env.STRIPE_RESTRICTED_KEY || process.env.STRIPE_SECRET_KEY;
+  if (!key) throw Object.assign(new Error('STRIPE_RESTRICTED_KEY is not configured'), { status: 503 });
   client ??= new Stripe(key);
   return client;
 }
@@ -14,7 +14,13 @@ export function stripe() {
 function priceIdFor(planId: PlanId) {
   const plan = getPlan(planId);
   if (!plan) throw Object.assign(new Error('Unknown subscription plan'), { status: 400 });
-  const priceId = process.env[plan.priceEnv];
+  const aliases: Record<string, string[]> = {
+    STRIPE_PRICE_STANDARD: ['STRIPE_PRICE_STANDARD', 'STRIPE_STANDARD_PRICE_ID'],
+    STRIPE_PRICE_PREMIUM: ['STRIPE_PRICE_PREMIUM', 'STRIPE_PREMIUM_PRICE_ID'],
+    STRIPE_PRICE_PRO: ['STRIPE_PRICE_PRO', 'STRIPE_PRO_PRICE_ID'],
+    STRIPE_PRICE_ULTRA_PRO: ['STRIPE_PRICE_ULTRA_PRO', 'STRIPE_ULTRA_PRICE_ID'],
+  };
+  const priceId = (aliases[plan.priceEnv] || [plan.priceEnv]).map((key) => process.env[key]).find(Boolean);
   if (!priceId) throw Object.assign(new Error(`${plan.priceEnv} is not configured`), { status: 503 });
   return { plan, priceId };
 }
@@ -40,8 +46,20 @@ export async function createSubscriptionCheckout(userId: string, email: string |
     const customer = await s.customers.create({ email: email || undefined, metadata: { userId } });
     customerId = customer.id;
   }
-  const base = process.env.PUBLIC_SITE_URL || 'https://fruitstory.io';
-  const session = await s.checkout.sessions.create({ mode: 'subscription', customer: customerId, line_items: [{ price: priceId, quantity: 1 }], allow_promotion_codes: true, client_reference_id: userId, metadata: { userId, planId }, subscription_data: { metadata: { userId, planId } }, success_url: `${base}/dashboard?subscription=success&session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${base}/dashboard?subscription=cancelled` });
+  const base = process.env.STRIPE_SITE_URL || process.env.PUBLIC_SITE_URL || 'https://fruitstory.io';
+  const successUrl = process.env.STRIPE_SUCCESS_URL || `${base}/dashboard?subscription=success&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = process.env.STRIPE_CANCEL_URL || `${base}/dashboard?subscription=cancelled`;
+  const session = await s.checkout.sessions.create({
+    mode: 'subscription',
+    customer: customerId,
+    line_items: [{ price: priceId, quantity: 1 }],
+    allow_promotion_codes: true,
+    client_reference_id: userId,
+    metadata: { userId, planId },
+    subscription_data: { metadata: { userId, planId } },
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+  });
   return { id: session.id, url: session.url, plan };
 }
 
