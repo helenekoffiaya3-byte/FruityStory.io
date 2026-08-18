@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FruityStory.io — Developer Platform</title><link rel="stylesheet" href="/styles.css">
+<style>
+.dev-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin:28px 0}.dev-card{padding:22px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(255,255,255,.04)}.code{background:#07110d;padding:18px;border-radius:14px;overflow:auto;font-family:monospace;font-size:13px}.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(100,180,120,.15);margin:4px}.btn{display:inline-block;margin-top:10px}
+</style></head>
+<body><header class="topbar"><a class="brand" href="/"><img src="/assets/fruitystory-logo.svg" alt="FruityStory.io" class="site-logo"><span>FruityStory.io</span></a><nav><a href="/">Accueil</a><a href="/dashboard.html">Dashboard</a><a href="/studio.html">Studio</a><a href="/developer.html">Développeurs</a><a href="/balance.html">Paiements</a></nav></header>
+<main class="page"><span class="eyebrow">DEVELOPER PLATFORM</span><h1>Construis avec l'API vidéo IA FruityStory</h1><p>Une plateforme développeur pour intégrer la génération vidéo, les crédits et les paiements dans tes propres applications.</p>
+<div class="dev-grid"><article class="dev-card"><h2>🎬 Video API</h2><p>Texte → vidéo, scènes, personnages et orchestration des fournisseurs vidéo.</p><span class="pill">POST /api/video/generate</span><span class="pill">GET /api/video/status</span></article><article class="dev-card"><h2>🔑 API Keys</h2><p>Crée des clés dédiées à tes applications. Les secrets restent côté serveur.</p><span class="pill">Projet</span><span class="pill">Production</span></article><article class="dev-card"><h2>💳 Payment API</h2><p>Intègre les paiements, abonnements, crédits et webhooks sans exposer les secrets.</p><span class="pill">Checkout</span><span class="pill">Webhook</span></article><article class="dev-card"><h2>📊 Usage & crédits</h2><p>Suivi de consommation, limites et facturation par API.</p><span class="pill">Usage</span><span class="pill">Credits</span></article></div>
+<h2>Exemple d'appel vidéo</h2><pre class="code">curl -X POST https://fruitstory.io/api/video/generate \
+  -H "Authorization: Bearer FS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Une histoire cinématique avec des personnages-fruits","duration":15}'</pre>
+<h2>Architecture paiement</h2><p>Le frontend appelle une Function Netlify sécurisée. Le serveur crée la session de paiement avec le fournisseur configuré, puis confirme l'achat via webhook avant d'ajouter les crédits.</p><pre class="code">POST /api/payments/checkout
+POST /api/payments/webhook
+GET  /api/payments/usage</pre>
+<a class="btn" href="/developer-docs.html">Ouvrir la documentation API</a></main><footer>© 2026 FruityStory.io</footer></body></html>
