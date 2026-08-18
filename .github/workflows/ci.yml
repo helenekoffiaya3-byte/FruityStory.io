@@ -62,3 +62,6 @@ jobs:
           grep -q "fsk_payments_" backend/src/developer-platform.ts
           grep -q "createDeveloperKey" backend/src/developer-platform.ts
           grep -q "revokeDeveloperKey" backend/src/developer-platform.ts
+
+      - name: CI health marker
+        run: echo "FruityStory CI dispatch is enabled on main"
