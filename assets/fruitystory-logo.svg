@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" role="img" aria-labelledby="title desc">
+  <title id="title">FruityStory.io</title>
+  <desc id="desc">Logo FruityStory.io avec pomme, bouton lecture et pellicule de film.</desc>
+  <defs>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b7ff35"/><stop offset=".45" stop-color="#42e61d"/><stop offset="1" stop-color="#0a8f3d"/></linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#d7d7d7"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g transform="translate(450 130)" filter="url(#glow)">
+    <path d="M-128-38c-8-67 55-107 111-65 58-43 121 2 108 69-12 64-51 116-108 116S-116 31-128-38Z" fill="url(#green)" stroke="#d7ff62" stroke-width="7"/>
+    <path d="M-14-94c-1-34 21-55 50-64" fill="none" stroke="#7b431d" stroke-width="12" stroke-linecap="round"/>
+    <path d="M8-127c24-45 72-49 98-35-16 42-50 58-98 35Z" fill="url(#green)" stroke="#b7ff35" stroke-width="6"/>
+    <path d="M-33-13 38 30-33 73Z" fill="#c8ff35" stroke="#0c5534" stroke-width="8"/>
+    <path d="M-190 74C-73 168 78 168 190 70" fill="none" stroke="#f5fff9" stroke-width="25"/>
+    <path d="M-190 74C-73 168 78 168 190 70" fill="none" stroke="#123f34" stroke-width="16"/>
+    <g fill="#b7ff35">
+      <rect x="-156" y="79" width="18" height="10" rx="2"/><rect x="-123" y="98" width="18" height="10" rx="2"/><rect x="-90" y="111" width="18" height="10" rx="2"/><rect x="-57" y="119" width="18" height="10" rx="2"/><rect x="-24" y="123" width="18" height="10" rx="2"/><rect x="9" y="122" width="18" height="10" rx="2"/><rect x="42" y="116" width="18" height="10" rx="2"/><rect x="75" y="105" width="18" height="10" rx="2"/><rect x="108" y="89" width="18" height="10" rx="2"/><rect x="141" y="69" width="18" height="10" rx="2"/>
+    </g>
+  </g>
+  <text x="450" y="295" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="76" font-weight="800" letter-spacing="-3"><tspan fill="url(#silver)">Fruity</tspan><tspan fill="url(#green)">Story</tspan><tspan fill="url(#silver)">.io</tspan></text>
+  <text x="450" y="332" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" letter-spacing="6" fill="#b7ff35">CREATE • SHARE • INSPIRE</text>
+</svg>
