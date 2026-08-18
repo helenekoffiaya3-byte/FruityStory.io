@@ -4,16 +4,16 @@ import Stripe from "stripe";
 const env = (key: string) => Netlify.env.get(key) ?? "";
 
 function stripeClient() {
-  const key = env("STRIPE_RESTRICTED_KEY") || env("PAYMENT_SECRET_KEY");
+  const key = env("STRIPE_RESTRICTED_KEY") || env("PAYMENT_SECRET_KEY") || env("STRIPESUBSCRIBE");
   if (!key) throw new Error("Stripe server key is not configured");
   return new Stripe(key);
 }
 
 const prices: Record<string, string> = {
-  standard: env("STRIPE_STANDARD_PRICE_ID"),
-  premium: env("STRIPE_PREMIUM_PRICE_ID"),
-  pro: env("STRIPE_PRO_PRICE_ID"),
-  ultra: env("STRIPE_ULTRA_PRICE_ID"),
+  standard: env("STRIPE_STANDARD_PRICE_ID") || env("STRIPE_PRICE_STANDARD") || env("STANDARD_PRICE_STRIPE_ANNUAL"),
+  premium: env("STRIPE_PREMIUM_PRICE_ID") || env("STRIPE_PRICE_PREMIUM") || env("PRENIUM_STRIPE_ANNUAL"),
+  pro: env("STRIPE_PRO_PRICE_ID") || env("STRIPE_PRICE_PRO"),
+  ultra: env("STRIPE_ULTRA_PRICE_ID") || env("STRIPE_PRICE_ULTRA_PRO"),
 };
 
 export default async (request: Request) => {
