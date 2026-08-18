@@ -49,6 +49,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/paypal"
+  to = "/.netlify/functions/paypal"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/backend/:splat"
   status = 200
