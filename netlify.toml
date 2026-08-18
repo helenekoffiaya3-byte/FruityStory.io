@@ -43,6 +43,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/developer/*"
+  to = "/.netlify/functions/developer-api"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/send-email"
   to = "/.netlify/functions/send-email"
   status = 200
