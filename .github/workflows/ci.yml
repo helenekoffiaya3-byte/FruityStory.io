@@ -71,7 +71,7 @@ jobs:
       - name: Verify PayPal is removed
         run: |
           test ! -e netlify/functions/paypal.ts
-          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules "paypal" .
+          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules --exclude=ci.yml "paypal" .
 
       - name: Work complete
         run: echo "FruityStory CI validation completed successfully"
