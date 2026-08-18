@@ -56,6 +56,7 @@ jobs:
       - name: Validate FSK developer platform
         run: |
           test -f backend/src/developer-platform.ts
+          test -f netlify/functions/developer-api.ts
           grep -q "KEY_TYPES" backend/src/developer-platform.ts
           grep -q "'video'" backend/src/developer-platform.ts
           grep -q "'ai'" backend/src/developer-platform.ts
@@ -63,3 +64,14 @@ jobs:
           grep -q "fsk_\${type}" backend/src/developer-platform.ts
           grep -q "createDeveloperKey" backend/src/developer-platform.ts
           grep -q "revokeDeveloperKey" backend/src/developer-platform.ts
+          grep -q "createAccountDeveloperKey" backend/src/developer-platform.ts
+          grep -q "createAccountDeveloperKey" netlify/functions/developer-api.ts
+          grep -q "getDeveloperKeyBySecret" netlify/functions/developer-api.ts
+
+      - name: Verify PayPal is removed
+        run: |
+          test ! -e netlify/functions/paypal.ts
+          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules "paypal" .
+
+      - name: Work complete
+        run: echo "FruityStory CI validation completed successfully"
