@@ -1,6 +1,6 @@
 # FruityStory.io
 
-Projet web FruityStory.io : création de dramas de fruits, génération IA, Studio créateur, édition et préparation à la publication.
+Plateforme de création vidéo IA, Studio créateur et **Developer Platform** pour intégrer la génération vidéo, les crédits et les paiements dans des applications tierces.
 
 ## Interface
 
@@ -9,31 +9,30 @@ Projet web FruityStory.io : création de dramas de fruits, génération IA, Stud
 - `dashboard.html` — profil / tableau de bord
 - `studio.html` — FruityStory Studio
 - `generate.html` — générateur IA
+- `developer.html` — portail développeurs
+- `developer-docs.html` — documentation API
 - `editor.html` / `editor.js` / `editor.css` — éditeur
 - `publish.html` — publication et zone de diffusion
 - `rewards.html` — programme de récompenses créateurs
 - `credits.html` — crédits
-- `settings.html` / `settings.css` — paramètres
-- `styles.css` / `app.js` — base UI et interactions
+
+## Developer Platform
+
+La plateforme expose une architecture API pour :
+
+- génération vidéo IA (`/api/video/generate`)
+- suivi des jobs (`/api/video/status`)
+- gestion de l'usage et des crédits (`/api/usage`)
+- création de checkout paiement (`/api/payments/checkout`)
+- réception et validation des webhooks paiement (`/api/payments/webhook`)
+- futures clés API et projets développeur
+
+Les intégrations paiement doivent être exécutées côté serveur et confirmées par webhook. Aucun secret fournisseur ou clé privée ne doit être placé dans le frontend ou commitée dans GitHub.
 
 ## Backend Netlify
 
 - `netlify/functions/health.js` — contrôle de santé
 - `netlify/functions/ai-story.ts` — préparation des personnages et scènes par IA
-- `netlify/functions/video-engine.ts` — point d'entrée d'orchestration des fournisseurs vidéo
-- `netlify.toml` — configuration Netlify
-- `package.json` — dépendances des Functions
+- `netlify/functions/video-engine.ts` — orchestration des fournisseurs vidéo
 
-## Règles FruityStory
-
-Les dramas sont conçus comme des scènes jouées dans la vie réelle : dialogues et actions, sans narration imposée. Les personnages sont des fruits anthropomorphes ; le fruit est une référence visuelle et le nom reste libre et créatif.
-
-La localisation de publication indique où le créateur souhaite diffuser son contenu : monde entier, continent, pays ou région/zone. Elle ne demande pas sa position GPS personnelle.
-
-## Netlify
-
-Le dépôt est structuré pour être importé dans Netlify : publication à la racine et Functions dans `netlify/functions` avec bundler esbuild.
-
-Avant toute génération IA réelle, configurer l'authentification du fournisseur dans les variables d'environnement Netlify ou activer Netlify AI Gateway lorsque cette voie est utilisée. **Aucune clé API ne doit être commitée dans GitHub.**
-
-Les intégrations d'authentification, paiement, fournisseurs vidéo et services externes restent des configurations/connexions de production à effectuer après l'import du dépôt.
+Avant toute génération IA ou paiement réel, configurer les fournisseurs dans les variables d'environnement Netlify. Les identifiants publics (ex. price ID) peuvent être utilisés côté client, mais les clés secrètes restent côté serveur.
