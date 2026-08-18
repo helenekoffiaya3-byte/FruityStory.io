@@ -23,8 +23,16 @@ export async function createSubscriptionCheckout(userId: string, email: string |
   const { plan, priceId } = priceIdFor(planId);
   const s = stripe();
   const price = await s.prices.retrieve(priceId);
-  if (price.currency !== 'eur' || price.unit_amount !== Math.round(plan.priceEur * 100) || price.type !== 'recurring' || price.recurring?.interval !== 'month') {
-    throw Object.assign(new Error(`Stripe price ${priceId} does not match ${plan.name}: ${plan.priceEur} EUR/month`), { status: 500 });
+  if (
+    price.currency !== plan.currency ||
+    price.unit_amount !== Math.round(plan.price * 100) ||
+    price.type !== 'recurring' ||
+    price.recurring?.interval !== 'month'
+  ) {
+    throw Object.assign(
+      new Error(`Stripe price ${priceId} does not match ${plan.name}: ${plan.price} ${plan.currency.toUpperCase()}/month`),
+      { status: 500 }
+    );
   }
   const existing = await db().query('SELECT stripe_customer_id FROM subscriptions WHERE user_id=$1 AND status IN (\'active\',\'trialing\',\'past_due\') ORDER BY updated_at DESC LIMIT 1', [userId]);
   let customerId = existing.rows[0]?.stripe_customer_id as string | undefined;
@@ -55,7 +63,7 @@ export async function handleStripeWebhook(rawBody: string, signature: string) {
     if (!userId || !planId || !getPlan(planId)) throw new Error('Checkout session is missing valid userId/planId metadata');
     const subscription: any = await stripe().subscriptions.retrieve(String(session.subscription));
     await db().query(`INSERT INTO subscriptions (user_id,stripe_customer_id,stripe_subscription_id,stripe_price_id,plan_id,status,current_period_end,cancel_at_period_end) VALUES($1,$2,$3,$4,$5,$6,to_timestamp($7),$8) ON CONFLICT (stripe_subscription_id) DO UPDATE SET plan_id=EXCLUDED.plan_id,status=EXCLUDED.status,current_period_end=EXCLUDED.current_period_end,cancel_at_period_end=EXCLUDED.cancel_at_period_end,updated_at=now()`, [userId,String(session.customer),subscription.id,String(subscription.items.data[0]?.price.id||''),planId,subscription.status,subscription.current_period_end,subscription.cancel_at_period_end]);
-    await grantCredits(userId,getPlan(planId)!.credits,`stripe:${subscription.id}:initial`);
+    await grantCredits(userId,getPlan(planId)!.credits + getPlan(planId)!.bonusCredits,`stripe:${subscription.id}:initial`);
   }
   if (event.type === 'invoice.paid') {
     const invoice: any = event.data.object;
