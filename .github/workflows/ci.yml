@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Verify Node and npm
         run: |
@@ -56,12 +56,10 @@ jobs:
       - name: Validate FSK developer platform
         run: |
           test -f backend/src/developer-platform.ts
-          grep -q "fsk_" backend/src/developer-platform.ts
-          grep -q "fsk_video_" backend/src/developer-platform.ts
-          grep -q "fsk_ai_" backend/src/developer-platform.ts
-          grep -q "fsk_payments_" backend/src/developer-platform.ts
+          grep -q "KEY_TYPES" backend/src/developer-platform.ts
+          grep -q "'video'" backend/src/developer-platform.ts
+          grep -q "'ai'" backend/src/developer-platform.ts
+          grep -q "'payments'" backend/src/developer-platform.ts
+          grep -q "fsk_\${type}" backend/src/developer-platform.ts
           grep -q "createDeveloperKey" backend/src/developer-platform.ts
           grep -q "revokeDeveloperKey" backend/src/developer-platform.ts
-
-      - name: CI health marker
-        run: echo "FruityStory CI dispatch is enabled on main"
