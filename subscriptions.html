@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Abonnements FruityStory.io — Standard, Premium, Pro et Ultra Pro.">
+  <title>FruityStory.io — Abonnements</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .billing-switch{display:flex;gap:8px;margin:24px 0}.billing-switch button{border:1px solid #ffffff18;border-radius:999px;background:#ffffff08;color:#fff;padding:11px 18px;font-weight:800;cursor:pointer}.billing-switch button.active{background:#a855f7;border-color:#a855f7}.plans{max-width:1180px;margin:0 auto 70px;padding:0 5%;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.plan{border:1px solid #ffffff12;background:#ffffff06;border-radius:22px;padding:24px;display:flex;flex-direction:column}.plan.popular{border-color:#a855f7;box-shadow:0 20px 60px #a855f718}.plan h2{margin:0}.price{font-size:2.3rem;font-weight:900;margin:18px 0 4px}.period{color:#94a3b8}.credits{color:#d8b4fe;font-weight:800;margin-bottom:16px}.plan ul{padding:0;margin:0 0 22px;list-style:none;color:#cbd5e1;flex:1}.plan li{margin:10px 0}.plan li::before{content:'✓';color:#4ade80;font-weight:900;margin-right:8px}.checkout{width:100%}.status{max-width:720px;margin:0 auto 50px;padding:0 5%;color:#d8b4fe}.error{color:#fda4af}.small{color:#64748b;font-size:.82rem}.topbar a.active{color:#fff}
+@media(max-width:900px){.plans{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.plans{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">🍎 FruityStory.io</a>
+  <nav><a href="/">Accueil</a><a href="/generate.html">Créer</a><a class="active" href="/subscriptions.html">Abonnements</a><a href="/dashboard.html">Dashboard</a></nav>
+</header>
+
+<main>
+  <section class="hero" style="min-height:auto;padding-bottom:30px">
+    <div class="hero-copy">
+      <span class="badge">💳 FRUITYSTORY · STRIPE</span>
+      <h1>Choisis ton abonnement.</h1>
+      <p>Active les crédits et fonctionnalités de ton plan. Le paiement est sécurisé sur Stripe Checkout.</p>
+      <div class="billing-switch" aria-label="Période de facturation">
+        <button id="monthly" class="active" type="button">Mensuel</button>
+        <button id="annual" type="button">Annuel</button>
+      </div>
+      <p id="status" class="status" style="padding:0;margin:0"></p>
+    </div>
+  </section>
+
+  <section class="plans" id="plans">
+    <article class="plan" data-plan="standard">
+      <h2>Standard</h2><p>Pour commencer à créer.</p>
+      <div class="price" data-monthly="7,99 €" data-annual="79,90 €">7,99 €</div><div class="period">/mois</div>
+      <div class="credits">4 000 crédits</div>
+      <ul><li>Génération vidéo IA</li><li>Texte → vidéo</li><li>Image → vidéo</li><li>Personnages IA</li><li>PixVerse</li><li>Jusqu'à 10 vidéos/jour</li><li>Vidéos jusqu'à 7 min</li><li>Publication sociale</li></ul>
+      <button class="btn primary checkout" type="button">S'abonner</button>
+    </article>
+
+    <article class="plan popular" data-plan="premium">
+      <span class="badge">⭐ POPULAIRE</span><h2>Premium</h2><p>Pour les créateurs réguliers.</p>
+      <div class="price" data-monthly="15,99 €" data-annual="159,90 €">15,99 €</div><div class="period">/mois</div>
+      <div class="credits">7 000 crédits</div>
+      <ul><li>Toutes les fonctions Standard</li><li>Sora 2</li><li>Gemini AI Pro</li><li>PixVerse</li><li>Agent IA FruityStory</li><li>Génération prioritaire</li><li>Jusqu'à 15 vidéos/jour</li><li>Vidéos jusqu'à 14 min</li></ul>
+      <button class="btn primary checkout" type="button">S'abonner</button>
+    </article>
+
+    <article class="plan" data-plan="pro">
+      <h2>Pro</h2><p>Pour les créateurs professionnels.</p>
+      <div class="price" data-monthly="20,99 €" data-annual="209,90 €">20,99 €</div><div class="period">/mois</div>
+      <div class="credits">10 000 crédits</div>
+      <ul><li>Toutes les fonctions Premium</li><li>Sora 2</li><li>Gemini AI Pro</li><li>PixVerse</li><li>API DRFR</li><li>Analytics avancés</li><li>Jusqu'à 20 vidéos/jour</li><li>Vidéos jusqu'à 19 min</li></ul>
+      <button class="btn primary checkout" type="button">S'abonner</button>
+    </article>
+
+    <article class="plan" data-plan="ultra_pro">
+      <h2>Ultra Pro 👑</h2><p>L'expérience FruityStory complète.</p>
+      <div class="price" data-monthly="29,99 €" data-annual="299,90 €">29,99 €</div><div class="period">/mois</div>
+      <div class="credits">Accès complet</div>
+      <ul><li>Toutes les fonctions FruityStory</li><li>Sora 2</li><li>Gemini AI Pro</li><li>PixVerse</li><li>Agent IA avancé</li><li>API DRFR</li><li>Analytics complets</li><li>Vidéos jusqu'à 25 min*</li><li>Support prioritaire</li></ul>
+      <button class="btn primary checkout" type="button">S'abonner</button>
+    </article>
+  </section>
+
+  <p class="small" style="max-width:1180px;margin:0 auto 70px;padding:0 5%">* Les limites réelles de génération dépendent des modèles et capacités disponibles. Les abonnements sont récurrents selon la période choisie.</p>
+</main>
+
+<footer><span>© 2026 FruityStory.io</span><div><a href="/privacy-policy.html">Confidentialité</a><a href="/settings.html">Conditions</a></div></footer>
+
+<script>
+  let billing = 'monthly';
+  const statusEl = document.getElementById('status');
+  const monthly = document.getElementById('monthly');
+  const annual = document.getElementById('annual');
+
+  function setBilling(value){
+    billing = value;
+    monthly.classList.toggle('active', value === 'monthly');
+    annual.classList.toggle('active', value === 'annual');
+    document.querySelectorAll('.price').forEach(el => el.textContent = el.dataset[value]);
+    document.querySelectorAll('.period').forEach(el => el.textContent = value === 'monthly' ? '/mois' : '/an');
+  }
+
+  monthly.addEventListener('click', () => setBilling('monthly'));
+  annual.addEventListener('click', () => setBilling('annual'));
+
+  document.querySelectorAll('.checkout').forEach(button => {
+    button.addEventListener('click', async () => {
+      const card = button.closest('[data-plan]');
+      const plan = card.dataset.plan;
+      button.disabled = true;
+      button.textContent = 'Connexion à Stripe…';
+      statusEl.className = 'status';
+      statusEl.textContent = '';
+      try {
+        const response = await fetch('/v1/checkout/sessions', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ plan, billing })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.url) throw new Error(data.error || 'Impossible de créer le paiement.');
+        window.location.href = data.url;
+      } catch (error) {
+        statusEl.className = 'status error';
+        statusEl.textContent = error.message || 'Erreur Stripe.';
+        button.disabled = false;
+        button.textContent = 'Réessayer';
+      }
+    });
+  });
+</script>
+</body>
+</html>
