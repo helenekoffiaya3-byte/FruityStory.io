@@ -91,12 +91,15 @@
     button.addEventListener('click', async () => {
       const card = button.closest('[data-plan]');
       const plan = card.dataset.plan;
+      const checkoutPath = plan === 'ultra_pro' && billing === 'annual'
+        ? '/api/checkout/ultra-pro-annual'
+        : '/v1/checkout/sessions';
       button.disabled = true;
       button.textContent = 'Connexion à Stripe…';
       statusEl.className = 'status';
       statusEl.textContent = '';
       try {
-        const response = await fetch('/v1/checkout/sessions', {
+        const response = await fetch(checkoutPath, {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ plan, billing })
         });
