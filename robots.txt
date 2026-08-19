@@ -5,4 +5,4 @@ Disallow: /.github/
 Disallow: /.env
 Disallow: /node_modules/
 
-Sitemap: https://fruitystory.io/sitemap.xml
+Sitemap: https://fruitystory-io.netlify.app/sitemap.xml
