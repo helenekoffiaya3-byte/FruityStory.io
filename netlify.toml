@@ -14,6 +14,36 @@
   skip_processing = false
 
 [[redirects]]
+  from = "/v1/checkout/sessions"
+  to = "/.netlify/functions/stripe-checkout-session"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/v1/checkout/sessions/search"
+  to = "/.netlify/functions/stripe-checkout-sessions"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/v1/checkout/sessions/:id"
+  to = "/.netlify/functions/stripe-checkout-session-get?id=:id"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/v1/checkout/sessions/:id/expire"
+  to = "/.netlify/functions/stripe-checkout-session-expire?id=:id"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/v1/refunds"
+  to = "/.netlify/functions/stripe-refund"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/health/providers"
   to = "/.netlify/functions/health-providers"
   status = 200
