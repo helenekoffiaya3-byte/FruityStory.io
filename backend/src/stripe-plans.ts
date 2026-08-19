@@ -17,7 +17,7 @@ export interface PlanConfig {
 
 export const PLANS: Record<PlanId, PlanConfig> = {
   standard: {
-    id: 'standard', name: 'Standard', currency: 'eur', price: 14.99,
+    id: 'standard', name: 'ProStandard', currency: 'eur', price: 14.99,
     credits: 7000, bonusCredits: 1000, videosPerDay: null, maxDurationMinutes: 5,
     categories: ['standard'], customFeatures: 0, agentGpt: false, priceEnv: 'STRIPE_PRICE_STANDARD'
   },
