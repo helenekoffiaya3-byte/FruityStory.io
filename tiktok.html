@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FruityStory.io — TikTok</title><link rel="stylesheet" href="/styles.css">
+<style>
+body{padding-bottom:90px}.tiktok-shell{max-width:900px;margin:auto;padding:24px}.tiktok-card{background:#fff;border:1px solid #dfe8e2;border-radius:20px;padding:22px;margin:18px 0}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.stat{border:1px solid #e1e9e4;border-radius:16px;padding:16px}.stat strong{display:block;font-size:28px;margin-top:6px}.profile{display:flex;gap:16px;align-items:center}.avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#eef6f0}.muted{color:#66736b}.error{background:#fff0f0;color:#8b2222;padding:12px;border-radius:12px}.hidden{display:none}
+</style>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/">🍎 <span>FruityStory.io</span></a><a class="btn ghost" href="/settings.html">Paramètres</a></header>
+<main class="tiktok-shell">
+<span class="eyebrow">TIKTOK</span><h1>Mon compte TikTok</h1>
+<p class="muted">Connecte ton compte TikTok pour afficher ici les informations et statistiques que TikTok autorise FruityStory.io à consulter. Aucun revenu TikTok n'est géré par cette page.</p>
+<section id="connect" class="tiktok-card"><h2>Connexion</h2><p>La connexion utilise TikTok Login Kit. Ton mot de passe TikTok reste chez TikTok.</p><a class="btn primary" href="/api/tiktok/authorize">Se connecter avec TikTok</a></section>
+<section id="dashboard" class="hidden">
+<div class="tiktok-card"><div class="profile"><img id="avatar" class="avatar" alt="Avatar TikTok"><div><h2 id="displayName">Compte TikTok</h2><p id="username" class="muted"></p><p id="verified" class="muted"></p></div></div></div>
+<div class="tiktok-card"><h2>Statistiques TikTok</h2><div class="stats"><div class="stat">Abonnés<strong id="followers">—</strong></div><div class="stat">Abonnements<strong id="following">—</strong></div><div class="stat">Likes reçus<strong id="likes">—</strong></div><div class="stat">Vidéos publiques<strong id="videos">—</strong></div></div><p id="updated" class="muted"></p></div>
+</section>
+<section id="error" class="tiktok-card error hidden"></section>
+</main>
+<nav class="bottom-nav"><a href="/">🏠<span>Accueil</span></a><a href="/search.html">🔎<span>Recherche</span></a><a class="create" href="/generate.html">＋<span>Créer</span></a><a href="/social.html">📱<span>Social</span></a><a href="/dashboard.html">👤<span>Profil</span></a></nav>
+<script>
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+if(params.get('error')){ $('error').textContent='Connexion TikTok : '+params.get('error'); $('error').classList.remove('hidden'); }
+async function load(){
+ try{
+  const r=await fetch('/api/tiktok/stats',{credentials:'same-origin'}); const data=await r.json();
+  if(!r.ok||!data.connected){ $('connect').classList.remove('hidden'); if(data.error){$('error').textContent=data.error;$('error').classList.remove('hidden');} return; }
+  $('connect').classList.add('hidden'); $('dashboard').classList.remove('hidden');
+  const p=data.profile||{},s=data.stats||{};
+  $('displayName').textContent=p.display_name||'Compte TikTok'; $('username').textContent=p.username?'@'+p.username:''; $('verified').textContent=p.is_verified?'✓ Compte vérifié':'';
+  if(p.avatar_url)$('avatar').src=p.avatar_url; $('followers').textContent=Number(s.follower_count||0).toLocaleString('fr-FR'); $('following').textContent=Number(s.following_count||0).toLocaleString('fr-FR'); $('likes').textContent=Number(s.likes_count||0).toLocaleString('fr-FR'); $('videos').textContent=Number(s.video_count||0).toLocaleString('fr-FR'); $('updated').textContent='Synchronisé avec TikTok à '+new Date().toLocaleTimeString('fr-FR');
+ }catch(e){$('error').textContent='Impossible de charger les statistiques TikTok.';$('error').classList.remove('hidden');}
+}
+load();
+</script>
+</body></html>
