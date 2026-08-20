@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { db } from './db';
 import { getPlan, type BillingPeriod, type PlanId } from './stripe-plans';
+import { STRIPE_PRICE_IDS } from './stripe-price-ids';
 import { isProfessionalFreeAccount } from '../../netlify/functions/_lib/professional-free';
 
 let client: Stripe | undefined;
@@ -16,10 +17,8 @@ function priceIdFor(planId: PlanId, billingPeriod: BillingPeriod) {
   const plan = getPlan(planId);
   if (!plan) throw Object.assign(new Error('Unknown subscription plan'), { status: 400 });
   const envName = billingPeriod === 'annual' ? plan.annualPriceEnv : plan.priceEnv;
-  const aliases = billingPeriod === 'annual'
-    ? [`${envName}`, `${envName.replace('STRIPE_PRICE_', 'STRIPE_')}_PRICE_ID`]
-    : [`${envName}`, `${envName.replace('STRIPE_PRICE_', 'STRIPE_')}_PRICE_ID`];
-  const priceId = aliases.map((key) => process.env[key]).find(Boolean);
+  const envPriceId = process.env[envName];
+  const priceId = envPriceId || STRIPE_PRICE_IDS[planId][billingPeriod];
   if (!priceId) throw Object.assign(new Error(`${envName} is not configured`), { status: 503 });
   return { plan, priceId };
 }
