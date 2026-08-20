@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { db } from './db';
 import { getPlan, type PlanId } from './stripe-plans';
-import { isProfessionalFreeAccount } from './_lib/professional-free';
+import { isProfessionalFreeAccount } from '../../netlify/functions/_lib/professional-free';
 
 let client: Stripe | undefined;
 
