@@ -1,27 +1,28 @@
-// FruityStory.io — Stripe Price IDs
-// Price IDs are public identifiers. NEVER place STRIPE_SECRET_KEY in frontend code.
+// FruityStory.io — Stripe Price configuration
+// Concrete Stripe Price IDs are stored only in Netlify environment variables.
+// This module contains no Stripe secret or concrete price value.
 
-export const STRIPE_PRICES = {
+export const STRIPE_PRICE_ENV_KEYS = {
   standard: {
-    monthly: 'price_1U62WvCddMFAR9EQcMw4vpGU',
-    annual: 'price_1U62X0CddMFAR9EQxMraf4R6'
+    monthly: 'STRIPE_PRICE_STANDARD',
+    annual: 'STRIPE_PRICE_STANDARD_ANNUAL'
   },
   premium: {
-    monthly: 'price_1U62X5CddMFAR9EQUSG7neMT',
-    annual: 'price_1U62XBCddMFAR9EQWic9vgPm'
+    monthly: 'STRIPE_PRICE_PREMIUM',
+    annual: 'STRIPE_PRICE_PREMIUM_ANNUAL'
   },
   pro: {
-    monthly: 'price_1U62XHCddMFAR9EQkCpJpLRu',
-    annual: 'price_1U62XMCddMFAR9EQhWM6vtMY'
+    monthly: 'STRIPE_PRICE_PRO',
+    annual: 'STRIPE_PRICE_PRO_ANNUAL'
   },
   ultra_pro: {
-    monthly: 'price_1U62XSCddMFAR9EQE1bEmZUl',
-    annual: 'price_1U62XgCddMFAR9EQaCyil9yW'
+    monthly: 'STRIPE_PRICE_ULTRA_PRO',
+    annual: 'STRIPE_PRICE_ULTRA_PRO_ANNUAL'
   }
 };
 
-export function getStripePriceId(plan, billing) {
-  const price = STRIPE_PRICES[plan]?.[billing];
-  if (!price) throw new Error('Plan ou période de facturation invalide.');
-  return price;
+export function getStripePriceEnvKey(plan, billing) {
+  const key = STRIPE_PRICE_ENV_KEYS[plan]?.[billing];
+  if (!key) throw new Error('Plan ou période de facturation invalide.');
+  return key;
 }
