@@ -1,5 +1,5 @@
 import type { Handler } from '@netlify/functions';
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { signToken } from '../../backend/src/auth';
 import { db } from '../../backend/src/db';
 
@@ -12,8 +12,7 @@ function cookieValue(header: string | undefined, name: string) {
 }
 
 function safeUsername(email: string) {
-  const base = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24) || 'googleuser';
-  return base;
+  return email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24) || 'googleuser';
 }
 
 export const handler: Handler = async event => {
@@ -45,15 +44,14 @@ export const handler: Handler = async event => {
       let username = safeUsername(profile.email);
       const collision = await db().query('SELECT 1 FROM users WHERE username=$1 LIMIT 1', [username]);
       if (collision.rows[0]) username = `${username}_${randomBytes(3).toString('hex')}`;
-      const passwordHash = createHash('sha256').update(randomBytes(32)).digest('hex');
-      const created = await db().query('INSERT INTO users(username,email,password_hash,display_name,avatar_url) VALUES($1,$2,$3,$4,$5) RETURNING *', [username, profile.email, passwordHash, profile.name || username, profile.picture || null]);
+      const created = await db().query('INSERT INTO users(username,email,password_hash,display_name,avatar_url) VALUES($1,$2,NULL,$3,$4) RETURNING *', [username, profile.email, profile.name || username, profile.picture || null]);
       user = created.rows[0];
     } else if (profile.picture && !user.avatar_url) {
       await db().query('UPDATE users SET avatar_url=$1,updated_at=now() WHERE id=$2', [profile.picture, user.id]);
     }
 
     const jwt = signToken({ id: user.id, username: user.username });
-    return { statusCode: 302, headers: { location: '/dashboard.html?login=success', 'cache-control': 'no-store', 'set-cookie': `${AUTH_COOKIE}=${encodeURIComponent(jwt)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax` }, multiValueHeaders: { 'set-cookie': [`${AUTH_COOKIE}=${encodeURIComponent(jwt)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`, `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`] }, body: '' };
+    return { statusCode: 302, headers: { location: '/dashboard.html?login=success', 'cache-control': 'no-store' }, multiValueHeaders: { 'set-cookie': [`${AUTH_COOKIE}=${encodeURIComponent(jwt)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`, `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`] }, body: '' };
   } catch (error) {
     console.error('Google OAuth callback failed', error);
     return { statusCode: 502, headers: { 'content-type': 'text/html; charset=utf-8' }, body: '<h1>Connexion Google impossible</h1><p>Vérifiez la configuration OAuth Google et réessayez.</p>' };
