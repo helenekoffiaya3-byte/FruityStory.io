@@ -40,7 +40,7 @@ jobs:
       - name: Validate Netlify configuration
         run: test -f netlify.toml && test -d netlify/functions
 
-      - name: Validate frontend entry points
+      - name: Validate frontend and OAuth entry points
         run: |
           test -f index.html
           test -f generate.html
@@ -52,8 +52,19 @@ jobs:
           test -f settings.html
           test -f tiktok.html
           test -f promote.html
+          test -f netlify/functions/google-authorize.ts
+          test -f netlify/functions/google-callback.ts
+          test -f netlify/functions/tiktok-authorize.ts
+          test -f netlify/functions/tiktok-callback.ts
+          test -f netlify/functions/tiktok-stats.ts
           test ! -e monetization.html
           test ! -e rewards.html
+
+      - name: Verify no secret values are shipped in source frontend code
+        run: |
+          ! grep -RniE --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' '(sk_(live|test)_|sk-proj-|whsec_|AIza[0-9A-Za-z_-]{20,})' .
+          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' 'TIKTOK_CLIENT_SECRET[[:space:]]*=' .
+          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' 'GOOGLE_CLIENT_SECRET[[:space:]]*=' .
 
       - name: Validate FSK developer platform
         run: |
@@ -70,10 +81,11 @@ jobs:
           grep -q "createAccountDeveloperKey" netlify/functions/developer-api.ts
           grep -q "getDeveloperKeyBySecret" netlify/functions/developer-api.ts
 
-      - name: Verify PayPal is removed
+      - name: Verify PayPal and Infobip are removed
         run: |
           test ! -e netlify/functions/paypal.ts
           ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules --exclude=ci.yml "paypal" .
+          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules --exclude=ci.yml "infobip" .
 
       - name: Work complete
         run: echo "FruityStory CI validation completed successfully"
