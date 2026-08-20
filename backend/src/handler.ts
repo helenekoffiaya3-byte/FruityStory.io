@@ -26,8 +26,8 @@ export const handler:Handler=async event=>{
   }
   const body=jsonBody(event);
   if(p[0]==='health') { await db().query('SELECT 1'); return response(200,{ok:true,database:'connected'}); }
-  if(p[0]==='auth'&&m==='POST'&&p[1]==='register'){const input=registerSchema.parse(body);const u=await createUser(input.username,input.email,await hashPassword(input.password));return response(201,{user:u,token:signToken({id:u.id,username:u.username})});}
-  if(p[0]==='auth'&&m==='POST'&&p[1]==='login'){const input=loginSchema.parse(body);const u=await getUserByLogin(input.login);if(!u||!u.password_hash||!(await checkPassword(input.password,u.password_hash)))return response(401,{error:'Invalid credentials'});return response(200,{user:await getUser(u.id),token:signToken({id:u.id,username:u.username})});}
+  if(p[0]==='auth'&&m==='POST'&&p[1]==='register'){const input=registerSchema.parse(body);const u=await createUser(input.username,input.email,await hashPassword(input.password));const token=signToken({id:u.id,username:u.username});return response(201,{user:u,token}, {'set-cookie':`fruity_auth_token=${encodeURIComponent(token)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`});}
+  if(p[0]==='auth'&&m==='POST'&&p[1]==='login'){const input=loginSchema.parse(body);const u=await getUserByLogin(input.login);if(!u||!u.password_hash||!(await checkPassword(input.password,u.password_hash)))return response(401,{error:'Invalid credentials'});const token=signToken({id:u.id,username:u.username});return response(200,{user:await getUser(u.id),token},{'set-cookie':`fruity_auth_token=${encodeURIComponent(token)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`});}
   if(p[0]==='auth'&&m==='GET'&&p[1]==='me'){const u=requireUser(event);return response(200,{user:await getUser(u.id)});}
   if(p[0]==='subscriptions'){
     if(m==='GET'&&!p[1]) return response(200,{plans:publicPlans()});
