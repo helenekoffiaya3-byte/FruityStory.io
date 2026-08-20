@@ -14,24 +14,6 @@
   skip_processing = false
 
 [[redirects]]
-  from = "/api/ark/chat"
-  to = "/.netlify/functions/ark-chat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/ark/video/generate"
-  to = "/.netlify/functions/ark-video-generate"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/ark/video/status"
-  to = "/.netlify/functions/ark-video-status"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/v1/checkout/sessions"
   to = "/.netlify/functions/stripe-checkout-session"
   status = 200
