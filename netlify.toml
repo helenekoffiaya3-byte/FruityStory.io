@@ -85,6 +85,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/characters"
+  to = "/.netlify/functions/characters"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/backend/:splat"
   status = 200
