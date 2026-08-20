@@ -4,7 +4,7 @@ import { db } from './db';
 import { addComment, comments, createUser, createVideo, feed, follow, getUser, getUserByLogin, likeVideo, unlikeVideo, unfollow } from './repository';
 import { commentSchema, generateSchema, loginSchema, promoteSchema, registerSchema, videoSchema } from './validation';
 import { createSubscriptionCheckout, handleStripeWebhook } from './stripe';
-import { publicPlans, getPlan, type PlanId } from './stripe-plans';
+import { publicPlans, getPlan, type BillingPeriod, type PlanId } from './stripe-plans';
 import { isProfessionalFreeAccount, PROFESSIONAL_FREE_ENTITLEMENTS } from '../../netlify/functions/_lib/professional-free';
 import { generateWithProvider, chooseProvider } from '../../netlify/functions/providers';
 
@@ -42,9 +42,10 @@ export const handler:Handler=async event=>{
       const u=requireUser(event); const user=await getUser(u.id);
       if(isProfessionalFreeAccount(user?.email)) return response(200,{checkoutUrl:null,sessionId:null,plan:PROFESSIONAL_FREE_ENTITLEMENTS,free:true,message:'Professional account has permanent free access. Stripe checkout is disabled.'});
       const planId=String(body.planId||'') as PlanId;
+      const billingPeriod=(body.billingPeriod === 'annual' ? 'annual' : 'monthly') as BillingPeriod;
       if(!getPlan(planId))return response(400,{error:'Invalid planId',allowed:['standard','premium','pro','ultra_pro']});
-      const result=await createSubscriptionCheckout(u.id,user?.email,planId);
-      return response(200,{checkoutUrl:result.url,sessionId:result.id,plan:result.plan});
+      const result=await createSubscriptionCheckout(u.id,user?.email,planId,billingPeriod);
+      return response(200,{checkoutUrl:result.url,sessionId:result.id,plan:result.plan,billingPeriod:result.billingPeriod});
     }
     if(m==='POST'&&p[1]==='cancel'){
       const u=requireUser(event); const user=await getUser(u.id);
