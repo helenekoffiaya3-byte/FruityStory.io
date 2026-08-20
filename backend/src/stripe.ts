@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { db } from './db';
 import { getPlan, type PlanId } from './stripe-plans';
+import { isProfessionalFreeAccount } from './_lib/professional-free';
 
 let client: Stripe | undefined;
 
@@ -26,6 +27,10 @@ function priceIdFor(planId: PlanId) {
 }
 
 export async function createSubscriptionCheckout(userId: string, email: string | null | undefined, planId: PlanId) {
+  // Server-side hard stop: this professional account is permanently free and must never enter Stripe Checkout.
+  if (isProfessionalFreeAccount(email)) {
+    throw Object.assign(new Error('This professional account has permanent free access and cannot be charged by Stripe'), { status: 403 });
+  }
   const { plan, priceId } = priceIdFor(planId);
   const s = stripe();
   const price = await s.prices.retrieve(priceId);
