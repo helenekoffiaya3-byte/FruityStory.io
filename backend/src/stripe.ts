@@ -1,7 +1,6 @@
 import Stripe from 'stripe';
 import { db } from './db';
 import { getPlan, type BillingPeriod, type PlanId } from './stripe-plans';
-import { STRIPE_PRICE_IDS } from './stripe-price-ids';
 import { isProfessionalFreeAccount } from '../../netlify/functions/_lib/professional-free';
 
 let client: Stripe | undefined;
@@ -17,8 +16,7 @@ function priceIdFor(planId: PlanId, billingPeriod: BillingPeriod) {
   const plan = getPlan(planId);
   if (!plan) throw Object.assign(new Error('Unknown subscription plan'), { status: 400 });
   const envName = billingPeriod === 'annual' ? plan.annualPriceEnv : plan.priceEnv;
-  const envPriceId = process.env[envName];
-  const priceId = envPriceId || STRIPE_PRICE_IDS[planId][billingPeriod];
+  const priceId = process.env[envName];
   if (!priceId) throw Object.assign(new Error(`${envName} is not configured`), { status: 503 });
   return { plan, priceId };
 }
@@ -31,7 +29,7 @@ export async function createSubscriptionCheckout(userId: string, email: string |
   const expectedAmount = Math.round((billingPeriod === 'annual' ? plan.annualPrice : plan.price) * 100);
   const expectedInterval = billingPeriod === 'annual' ? 'year' : 'month';
   if (price.currency !== plan.currency || price.unit_amount !== expectedAmount || price.type !== 'recurring' || price.recurring?.interval !== expectedInterval) {
-    throw Object.assign(new Error(`Stripe price ${priceId} does not match ${plan.name} ${billingPeriod}`), { status: 500 });
+    throw Object.assign(new Error(`Stripe price does not match ${plan.name} ${billingPeriod}`), { status: 500 });
   }
   const existing = await db().query('SELECT stripe_customer_id FROM subscriptions WHERE user_id=$1 AND status IN (\'active\',\'trialing\',\'past_due\') ORDER BY updated_at DESC LIMIT 1', [userId]);
   let customerId = existing.rows[0]?.stripe_customer_id as string | undefined;
