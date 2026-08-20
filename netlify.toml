@@ -67,6 +67,24 @@
   force = true
 
 [[redirects]]
+  from = "/api/tiktok/authorize"
+  to = "/.netlify/functions/tiktok-authorize"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/api/tiktok/callback"
+  to = "/.netlify/functions/tiktok-callback"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/tiktok/stats"
+  to = "/.netlify/functions/tiktok-stats"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/v1/*"
   to = "/.netlify/functions/provider-api"
   status = 200

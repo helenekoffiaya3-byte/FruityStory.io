@@ -50,8 +50,10 @@ jobs:
           test -f search.html
           test -f auth.html
           test -f settings.html
-          test -f monetization.html
+          test -f tiktok.html
           test -f promote.html
+          test ! -e monetization.html
+          test ! -e rewards.html
 
       - name: Validate FSK developer platform
         run: |
