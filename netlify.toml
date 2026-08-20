@@ -67,6 +67,18 @@
   force = true
 
 [[redirects]]
+  from = "/api/auth/google/authorize"
+  to = "/.netlify/functions/google-authorize"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/api/auth/google/callback"
+  to = "/.netlify/functions/google-callback"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/tiktok/authorize"
   to = "/.netlify/functions/tiktok-authorize"
   status = 302
