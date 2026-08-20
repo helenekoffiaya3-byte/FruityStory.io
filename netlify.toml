@@ -99,7 +99,7 @@
 
 [[redirects]]
   from = "/api/tiktok/stats"
-  to = "/.netlify/functions/tiktok-stats
+  to = "/.netlify/functions/tiktok-stats"
   status = 200
   force = true
 
