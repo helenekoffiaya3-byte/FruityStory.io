@@ -1,5 +1,5 @@
 import type { Handler } from '@netlify/functions';
-import { createDecipheriv, createHash } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 const TOKEN_COOKIE = 'fruity_tiktok_session';
 
@@ -24,7 +24,6 @@ function decrypt(value: string) {
 }
 
 function encrypt(value: unknown) {
-  const { createCipheriv, randomBytes } = require('node:crypto') as typeof import('node:crypto');
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key(), iv);
   const encrypted = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]);
@@ -58,10 +57,10 @@ export const handler: Handler = async event => {
       refreshed = true;
     }
 
-    const fields = 'open_id,avatar_url,display_name,profile_deep_link,bio_description,is_verified,follower_count,following_count,likes_count,video_count';
+    const fields = 'open_id,avatar_url,display_name,profile_deep_link,bio_description,is_verified,follower_count,following_count,likes_count,video_count,username';
     const response = await fetch(`https://open.tiktokapis.com/v2/user/info/?fields=${encodeURIComponent(fields)}`, { headers: { authorization: `Bearer ${session.accessToken}` } });
     const payload = await response.json() as Record<string, any>;
-    if (!response.ok || payload.error?.code && payload.error.code !== 'ok') {
+    if (!response.ok || (payload.error?.code && payload.error.code !== 'ok')) {
       console.error('TikTok user info failed', payload);
       return { statusCode: 502, headers: jsonHeaders, body: JSON.stringify({ connected: true, error: 'TikTok ne permet pas de récupérer les statistiques demandées. Vérifiez que les scopes nécessaires sont approuvés.' }) };
     }
