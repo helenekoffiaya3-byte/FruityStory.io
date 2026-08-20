@@ -5,6 +5,7 @@ import { addComment, comments, createUser, createVideo, feed, follow, getUser, g
 import { commentSchema, generateSchema, loginSchema, promoteSchema, registerSchema, videoSchema } from './validation';
 import { createSubscriptionCheckout, handleStripeWebhook } from './stripe';
 import { publicPlans, getPlan, type PlanId } from './stripe-plans';
+import { isProfessionalFreeAccount, PROFESSIONAL_FREE_ENTITLEMENTS } from './_lib/professional-free';
 import { generateWithProvider, chooseProvider } from '../../netlify/functions/providers';
 
 const response=(statusCode:number,body:unknown,extra:Record<string,string>={})=>({statusCode,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*','access-control-allow-headers':'Content-Type, Authorization, Stripe-Signature','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS',...extra},body:JSON.stringify(body)});
@@ -31,9 +32,27 @@ export const handler:Handler=async event=>{
 
   if(p[0]==='subscriptions'){
     if(m==='GET'&&!p[1]) return response(200,{plans:publicPlans()});
-    if(m==='GET'&&p[1]==='me'){const u=requireUser(event);const r=await db().query('SELECT id,plan_id AS "planId",status,current_period_end AS "currentPeriodEnd",cancel_at_period_end AS "cancelAtPeriodEnd" FROM subscriptions WHERE user_id=$1 ORDER BY updated_at DESC',[u.id]);const active=r.rows.find((x:any)=>['active','trialing','past_due'].includes(x.status));return response(200,{subscription:active||null,history:r.rows,plan:active?getPlan(active.planId)||null:null});}
-    if(m==='POST'&&p[1]==='checkout'){const u=requireUser(event);const planId=String(body.planId||'') as PlanId;if(!getPlan(planId))return response(400,{error:'Invalid planId',allowed:['standard','premium','pro','ultra_pro']});const user=await getUser(u.id);const result=await createSubscriptionCheckout(u.id,user?.email,planId);return response(200,{checkoutUrl:result.url,sessionId:result.id,plan:result.plan});}
-    if(m==='POST'&&p[1]==='cancel'){const u=requireUser(event);const r=await db().query('SELECT stripe_subscription_id FROM subscriptions WHERE user_id=$1 AND status IN (\'active\',\'trialing\') ORDER BY updated_at DESC LIMIT 1',[u.id]);if(!r.rows[0])return response(404,{error:'No active subscription'});const { stripe }=await import('./stripe');const sub=await stripe().subscriptions.update(r.rows[0].stripe_subscription_id,{cancel_at_period_end:true});await db().query('UPDATE subscriptions SET cancel_at_period_end=true,updated_at=now() WHERE stripe_subscription_id=$1',[sub.id]);return response(200,{ok:true,cancelAtPeriodEnd:true});}
+    if(m==='GET'&&p[1]==='me'){
+      const u=requireUser(event);
+      const user=await getUser(u.id);
+      if(isProfessionalFreeAccount(user?.email)) return response(200,{subscription:null,history:[],plan:PROFESSIONAL_FREE_ENTITLEMENTS});
+      const r=await db().query('SELECT id,plan_id AS "planId",status,current_period_end AS "currentPeriodEnd",cancel_at_period_end AS "cancelAtPeriodEnd" FROM subscriptions WHERE user_id=$1 ORDER BY updated_at DESC',[u.id]);
+      const active=r.rows.find((x:any)=>['active','trialing','past_due'].includes(x.status));
+      return response(200,{subscription:active||null,history:r.rows,plan:active?getPlan(active.planId)||null:null});
+    }
+    if(m==='POST'&&p[1]==='checkout'){
+      const u=requireUser(event);const user=await getUser(u.id);
+      if(isProfessionalFreeAccount(user?.email)) return response(200,{checkoutUrl:null,sessionId:null,plan:PROFESSIONAL_FREE_ENTITLEMENTS,free:true,message:'Professional account has permanent free access. Stripe checkout is disabled.'});
+      const planId=String(body.planId||'') as PlanId;
+      if(!getPlan(planId))return response(400,{error:'Invalid planId',allowed:['standard','premium','pro','ultra_pro']});
+      const result=await createSubscriptionCheckout(u.id,user?.email,planId);
+      return response(200,{checkoutUrl:result.url,sessionId:result.id,plan:result.plan});
+    }
+    if(m==='POST'&&p[1]==='cancel'){
+      const u=requireUser(event);const user=await getUser(u.id);
+      if(isProfessionalFreeAccount(user?.email)) return response(200,{ok:true,cancelAtPeriodEnd:false,free:true,message:'Professional account has no Stripe subscription to cancel.'});
+      const r=await db().query('SELECT stripe_subscription_id FROM subscriptions WHERE user_id=$1 AND status IN (\'active\',\'trialing\') ORDER BY updated_at DESC LIMIT 1',[u.id]);if(!r.rows[0])return response(404,{error:'No active subscription'});const { stripe }=await import('./stripe');const sub=await stripe().subscriptions.update(r.rows[0].stripe_subscription_id,{cancel_at_period_end:true});await db().query('UPDATE subscriptions SET cancel_at_period_end=true,updated_at=now() WHERE stripe_subscription_id=$1',[sub.id]);return response(200,{ok:true,cancelAtPeriodEnd:true});
+    }
   }
   if(p[0]==='feed'&&m==='GET'){const limit=Math.min(Number(event.queryStringParameters?.limit||20),50);return response(200,{items:await feed(limit,event.queryStringParameters?.cursor)});}
   if(p[0]==='users'&&p[1]&&m==='GET'){const u=await getUser(p[1]);return u?response(200,{user:u}):response(404,{error:'User not found'});}
@@ -46,7 +65,6 @@ export const handler:Handler=async event=>{
   if(p[0]==='studio'||p[0]==='analytics'){const u=requireUser(event);const r=await db().query('SELECT COUNT(*)::int videos,COALESCE(SUM(views_count),0)::bigint views,COALESCE(SUM(likes_count),0)::bigint likes,COALESCE(SUM(comments_count),0)::bigint comments,COALESCE(SUM(shares_count),0)::bigint shares FROM videos WHERE author_id=$1',[u.id]);return response(200,{overview:r.rows[0]});}
   if(p[0]==='promote'){const u=requireUser(event);if(m==='POST'){const input=promoteSchema.parse(body);const r=await db().query('INSERT INTO promote_campaigns(user_id,video_id,objective,audience,budget,duration_days) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[u.id,input.videoId,input.objective,input.audience??{},input.budget,input.durationDays]);return response(201,{campaign:r.rows[0]});}const r=await db().query('SELECT * FROM promote_campaigns WHERE user_id=$1 ORDER BY created_at DESC',[u.id]);return response(200,{items:r.rows});}
 
-  // REAL VIDEO GENERATION: the request now reaches the selected provider and stores its long-running operation id.
   if(p[0]==='ai-video'&&m==='POST'&&p[1]==='generate'){
     const u=requireUser(event);const input=generateSchema.parse(body);const provider=chooseProvider(input.provider);
     const result=await generateWithProvider(provider,{prompt:input.prompt,duration:input.duration,aspectRatio:input.aspectRatio,imageUrl:input.imageUrl});
