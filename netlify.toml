@@ -121,6 +121,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/ark/chat"
+  to = "/.netlify/functions/ark-chat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/backend/:splat"
   status = 200
