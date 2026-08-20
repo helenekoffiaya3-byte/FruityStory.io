@@ -36,12 +36,13 @@ export const handler: Handler = async event => {
 
   const clientKey = process.env.TIKTOK_CLIENT_KEY;
   const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+  const code = query.code || '';
   const redirectUri = process.env.TIKTOK_REDIRECT_URI || `${event.headers['x-forwarded-proto'] || 'https'}://${event.headers.host || process.env.URL}/api/tiktok/callback`;
-  if (!clientKey || !clientSecret) {
-    return { statusCode: 503, headers: { 'content-type': 'text/html; charset=utf-8' }, body: '<h1>TikTok non configuré</h1><p>Les identifiants TikTok doivent être configurés dans Netlify.</p>' };
+  if (!clientKey || !clientSecret || !code) {
+    return { statusCode: 503, headers: { 'content-type': 'text/html; charset=utf-8' }, body: '<h1>TikTok non configuré</h1><p>Les identifiants TikTok ou le code d’autorisation sont manquants.</p>' };
   }
 
-  const form = new URLSearchParams({ client_key: clientKey, client_secret: clientSecret, code: query.code || '', grant_type: 'authorization_code', redirect_uri: redirectUri });
+  const form = new URLSearchParams({ client_key: clientKey, client_secret: clientSecret, code, grant_type: 'authorization_code', redirect_uri: redirectUri });
   const tokenResponse = await fetch('https://open.tiktokapis.com/v2/oauth/token/', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache' }, body: form });
   const token = await tokenResponse.json() as Record<string, any>;
   if (!tokenResponse.ok || !token.access_token || !token.refresh_token) {
@@ -60,11 +61,7 @@ export const handler: Handler = async event => {
 
   return {
     statusCode: 302,
-    headers: {
-      location: '/tiktok.html?connected=1',
-      'cache-control': 'no-store',
-      'set-cookie': `${TOKEN_COOKIE}=${encodeURIComponent(session)}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`,
-    },
+    headers: { location: '/tiktok.html?connected=1', 'cache-control': 'no-store' },
     multiValueHeaders: {
       'set-cookie': [
         `${TOKEN_COOKIE}=${encodeURIComponent(session)}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`,
