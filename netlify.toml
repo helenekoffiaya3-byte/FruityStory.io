@@ -2,6 +2,13 @@
   publish = "."
   command = "npm run build"
 
+  [build.environment]
+    # Stripe Price IDs are identifiers, not secrets. They are intentionally
+    # retained in the project/docs and stored in the corresponding Netlify
+    # environment variables. Exclude only these non-secret values from the
+    # secrets scanner; never exclude API keys, signing secrets, or tokens.
+    SECRETS_SCAN_OMIT_KEYS = "STRIPE_PRICE_STANDARD,STRIPE_PRICE_STANDARD_ANNUAL,STRIPE_PRICE_PREMIUM,STRIPE_PRICE_PREMIUM_ANNUAL,STRIPE_PRICE_PRO,STRIPE_PRICE_PRO_ANNUAL,STRIPE_PRICE_ULTRA_PRO,STRIPE_PRICE_ULTRA_PRO_ANNUAL"
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
@@ -92,7 +99,7 @@
 
 [[redirects]]
   from = "/api/tiktok/stats"
-  to = "/.netlify/functions/tiktok-stats"
+  to = "/.netlify/functions/tiktok-stats
   status = 200
   force = true
 
