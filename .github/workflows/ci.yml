@@ -38,6 +38,33 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify generated frontend bundle contains no secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f main.js
+          if grep -nE --binary-files=without-match '(sk_(live|test)_[A-Za-z0-9]{10,}|sk-proj-[A-Za-z0-9_-]{10,}|whsec_[A-Za-z0-9]{10,}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,})' main.js; then
+            echo 'ERROR: secret-like value detected in generated frontend bundle main.js'
+            exit 1
+          fi
+          if grep -nE --binary-files=without-match '(OPENAI_API_KEY|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|JWT_SECRET|DATABASE_URL|TIKTOK_CLIENT_SECRET|GOOGLE_CLIENT_SECRET)[[:space:]]*[:=]' main.js; then
+            echo 'ERROR: server-side secret variable appears assigned in generated frontend bundle main.js'
+            exit 1
+          fi
+          if grep -nE --binary-files=without-match 'process\.env\.(OPENAI_API_KEY|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|JWT_SECRET|DATABASE_URL|TIKTOK_CLIENT_SECRET|GOOGLE_CLIENT_SECRET)' main.js; then
+            echo 'ERROR: server-side process.env secret reference detected in generated frontend bundle main.js'
+            exit 1
+          fi
+          echo 'Generated frontend bundle secret scan passed.'
+
+      - name: Verify source files contain no secret values
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RniE --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' --include='*.json' --include='*.toml' '(sk_(live|test)_[A-Za-z0-9]{10,}|sk-proj-[A-Za-z0-9_-]{10,}|whsec_[A-Za-z0-9]{10,}|AIza[0-9A-Za-z_-]{20,})' .
+          ! grep -RniE --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' 'TIKTOK_CLIENT_SECRET[[:space:]]*=' .
+          ! grep -RniE --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' 'GOOGLE_CLIENT_SECRET[[:space:]]*=' .
+
       - name: Validate Netlify configuration
         run: test -f netlify.toml && test -d netlify/functions
 
@@ -60,12 +87,6 @@ jobs:
           test -f netlify/functions/tiktok-stats.ts
           test ! -e monetization.html
           test ! -e rewards.html
-
-      - name: Verify no secret values are shipped in source frontend code
-        run: |
-          ! grep -RniE --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' '(sk_(live|test)_|sk-proj-|whsec_|AIza[0-9A-Za-z_-]{20,})' .
-          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' 'TIKTOK_CLIENT_SECRET[[:space:]]*=' .
-          ! grep -Rni --exclude-dir=.git --exclude-dir=node_modules --include='*.html' --include='*.js' --include='*.ts' 'GOOGLE_CLIENT_SECRET[[:space:]]*=' .
 
       - name: Validate FSK developer platform
         run: |
