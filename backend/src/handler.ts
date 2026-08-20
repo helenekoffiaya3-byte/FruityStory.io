@@ -7,8 +7,8 @@ import { createSubscriptionCheckout, handleStripeWebhook } from './stripe';
 import { publicPlans, getPlan, type BillingPeriod, type PlanId } from './stripe-plans';
 import { isProfessionalFreeAccount, PROFESSIONAL_FREE_ENTITLEMENTS } from '../../netlify/functions/_lib/professional-free';
 import { generateWithProvider, chooseProvider } from '../../netlify/functions/providers';
+import { chargeCredits, refundCredits, VIDEO_GENERATION_CREDITS } from './credits';
 
-const VIDEO_GENERATION_CREDITS = 150;
 const response=(statusCode:number,body:unknown,extra:Record<string,string>={})=>({statusCode,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':process.env.FRONTEND_ORIGIN||'https://fruitystory.io','access-control-allow-headers':'Content-Type, Authorization, Stripe-Signature','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS',...extra},body:JSON.stringify(body)});
 const jsonBody=(event:any)=>{try{return event.body?JSON.parse(event.body):{};}catch{throw Object.assign(new Error('Invalid JSON'),{status:400});}};
 const path=(event:any)=>String(event.path||'').replace(/^.*\/\.netlify\/functions\/backend\/?/,'').replace(/^\/api\/?/,'').split('/').filter(Boolean);
@@ -17,45 +17,15 @@ const requireUser=(event:any)=>{const u=bearer(event);if(!u)throw Object.assign(
 export const handler:Handler=async event=>{
  if(event.httpMethod==='OPTIONS')return response(204,{});
  try{
-  const p=path(event), m=event.httpMethod||'GET';
+  const p=path(event),m=event.httpMethod||'GET';
   if(!p.length)return response(200,{ok:true,service:'FruityStory.io production API'});
-  if(p[0]==='stripe'&&p[1]==='webhook'&&m==='POST'){
-    const signature=event.headers?.['stripe-signature']||event.headers?.['Stripe-Signature'];
-    if(!signature)return response(400,{error:'Missing Stripe-Signature'});
-    const raw=event.isBase64Encoded?Buffer.from(event.body||'','base64').toString('utf8'):(event.body||'');
-    const type=await handleStripeWebhook(raw,signature); return response(200,{received:true,type});
-  }
+  if(p[0]==='stripe'&&p[1]==='webhook'&&m==='POST'){const signature=event.headers?.['stripe-signature']||event.headers?.['Stripe-Signature'];if(!signature)return response(400,{error:'Missing Stripe-Signature'});const raw=event.isBase64Encoded?Buffer.from(event.body||'','base64').toString('utf8'):(event.body||'');const type=await handleStripeWebhook(raw,signature);return response(200,{received:true,type});}
   const body=jsonBody(event);
-  if(p[0]==='health') { await db().query('SELECT 1'); return response(200,{ok:true,database:'connected'}); }
-  if(p[0]==='auth'&&m==='POST'&&p[1]==='register'){const input=registerSchema.parse(body);const u=await createUser(input.username,input.email,await hashPassword(input.password));const token=signToken({id:u.id,username:u.username});return response(201,{user:u,token}, {'set-cookie':`fruity_auth_token=${encodeURIComponent(token)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`});}
+  if(p[0]==='health'){await db().query('SELECT 1');return response(200,{ok:true,database:'connected'});}
+  if(p[0]==='auth'&&m==='POST'&&p[1]==='register'){const input=registerSchema.parse(body);const u=await createUser(input.username,input.email,await hashPassword(input.password));const token=signToken({id:u.id,username:u.username});return response(201,{user:u,token},{'set-cookie':`fruity_auth_token=${encodeURIComponent(token)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`});}
   if(p[0]==='auth'&&m==='POST'&&p[1]==='login'){const input=loginSchema.parse(body);const u=await getUserByLogin(input.login);if(!u||!u.password_hash||!(await checkPassword(input.password,u.password_hash)))return response(401,{error:'Invalid credentials'});const token=signToken({id:u.id,username:u.username});return response(200,{user:await getUser(u.id),token},{'set-cookie':`fruity_auth_token=${encodeURIComponent(token)}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`});}
   if(p[0]==='auth'&&m==='GET'&&p[1]==='me'){const u=requireUser(event);return response(200,{user:await getUser(u.id)});}
-  if(p[0]==='subscriptions'){
-    if(m==='GET'&&!p[1]) return response(200,{plans:publicPlans()});
-    if(m==='GET'&&p[1]==='me'){
-      const u=requireUser(event); const user=await getUser(u.id);
-      if(isProfessionalFreeAccount(user?.email)) return response(200,{subscription:null,history:[],plan:PROFESSIONAL_FREE_ENTITLEMENTS});
-      const r=await db().query('SELECT id,plan_id AS "planId",status,current_period_end AS "currentPeriodEnd",cancel_at_period_end AS "cancelAtPeriodEnd" FROM subscriptions WHERE user_id=$1 ORDER BY updated_at DESC',[u.id]);
-      const active=r.rows.find((x:any)=>['active','trialing','past_due'].includes(x.status));
-      return response(200,{subscription:active||null,history:r.rows,plan:active?getPlan(active.planId)||null:null});
-    }
-    if(m==='POST'&&p[1]==='checkout'){
-      const u=requireUser(event); const user=await getUser(u.id);
-      if(isProfessionalFreeAccount(user?.email)) return response(200,{checkoutUrl:null,sessionId:null,plan:PROFESSIONAL_FREE_ENTITLEMENTS,free:true,message:'Professional account has permanent free access. Stripe checkout is disabled.'});
-      const planId=String(body.planId||'') as PlanId;
-      const billingPeriod=(body.billingPeriod === 'annual' ? 'annual' : 'monthly') as BillingPeriod;
-      if(!getPlan(planId))return response(400,{error:'Invalid planId',allowed:['standard','premium','pro','ultra_pro']});
-      const result=await createSubscriptionCheckout(u.id,user?.email,planId,billingPeriod);
-      return response(200,{checkoutUrl:result.url,sessionId:result.id,plan:result.plan,billingPeriod:result.billingPeriod});
-    }
-    if(m==='POST'&&p[1]==='cancel'){
-      const u=requireUser(event); const user=await getUser(u.id);
-      if(isProfessionalFreeAccount(user?.email)) return response(200,{ok:true,cancelAtPeriodEnd:false,free:true,message:'Professional account has no Stripe subscription to cancel.'});
-      const r=await db().query('SELECT stripe_subscription_id FROM subscriptions WHERE user_id=$1 AND status IN (\'active\',\'trialing\') ORDER BY updated_at DESC LIMIT 1',[u.id]);
-      if(!r.rows[0])return response(404,{error:'No active subscription'});
-      const { stripe }=await import('./stripe');const sub=await stripe().subscriptions.update(r.rows[0].stripe_subscription_id,{cancel_at_period_end:true});await db().query('UPDATE subscriptions SET cancel_at_period_end=true,updated_at=now() WHERE stripe_subscription_id=$1',[sub.id]);return response(200,{ok:true,cancelAtPeriodEnd:true});
-    }
-  }
+  if(p[0]==='subscriptions'){if(m==='GET'&&!p[1])return response(200,{plans:publicPlans()});if(m==='GET'&&p[1]==='me'){const u=requireUser(event);const user=await getUser(u.id);if(isProfessionalFreeAccount(user?.email))return response(200,{subscription:null,history:[],plan:PROFESSIONAL_FREE_ENTITLEMENTS});const r=await db().query('SELECT id,plan_id AS "planId",status,current_period_end AS "currentPeriodEnd",cancel_at_period_end AS "cancelAtPeriodEnd" FROM subscriptions WHERE user_id=$1 ORDER BY updated_at DESC',[u.id]);const active=r.rows.find((x:any)=>['active','trialing','past_due'].includes(x.status));return response(200,{subscription:active||null,history:r.rows,plan:active?getPlan(active.planId)||null:null});}if(m==='POST'&&p[1]==='checkout'){const u=requireUser(event);const user=await getUser(u.id);if(isProfessionalFreeAccount(user?.email))return response(200,{checkoutUrl:null,sessionId:null,plan:PROFESSIONAL_FREE_ENTITLEMENTS,free:true,message:'Professional account has permanent free access. Stripe checkout is disabled.'});const planId=String(body.planId||'') as PlanId;const billingPeriod=(body.billingPeriod==='annual'?'annual':'monthly') as BillingPeriod;if(!getPlan(planId))return response(400,{error:'Invalid planId'});const result=await createSubscriptionCheckout(u.id,user?.email,planId,billingPeriod);return response(200,{checkoutUrl:result.url,sessionId:result.id,plan:result.plan,billingPeriod:result.billingPeriod});}if(m==='POST'&&p[1]==='cancel'){const u=requireUser(event);const user=await getUser(u.id);if(isProfessionalFreeAccount(user?.email))return response(200,{ok:true,cancelAtPeriodEnd:false,free:true,message:'Professional account has no Stripe subscription to cancel.'});const r=await db().query("SELECT stripe_subscription_id FROM subscriptions WHERE user_id=$1 AND status IN ('active','trialing') ORDER BY updated_at DESC LIMIT 1",[u.id]);if(!r.rows[0])return response(404,{error:'No active subscription'});const {stripe}=await import('./stripe');const sub=await stripe().subscriptions.update(r.rows[0].stripe_subscription_id,{cancel_at_period_end:true});await db().query('UPDATE subscriptions SET cancel_at_period_end=true,updated_at=now() WHERE stripe_subscription_id=$1',[sub.id]);return response(200,{ok:true,cancelAtPeriodEnd:true});}}
   if(p[0]==='feed'&&m==='GET'){const limit=Math.min(Number(event.queryStringParameters?.limit||20),50);return response(200,{items:await feed(limit,event.queryStringParameters?.cursor)});}
   if(p[0]==='users'&&p[1]&&m==='GET'){const u=await getUser(p[1]);return u?response(200,{user:u}):response(404,{error:'User not found'});}
   if(p[0]==='users'&&p[1]&&p[2]==='follow'){const me=requireUser(event);if(me.id===p[1])return response(400,{error:'Cannot follow yourself'});return response(200,{following:m==='POST'?await follow(me.id,p[1]):!(await unfollow(me.id,p[1]))});}
@@ -67,22 +37,17 @@ export const handler:Handler=async event=>{
   if(p[0]==='studio'||p[0]==='analytics'){const u=requireUser(event);const r=await db().query('SELECT COUNT(*)::int videos,COALESCE(SUM(views_count),0)::bigint views,COALESCE(SUM(likes_count),0)::bigint likes,COALESCE(SUM(comments_count),0)::bigint comments,COALESCE(SUM(shares_count),0)::bigint shares FROM videos WHERE author_id=$1',[u.id]);return response(200,{overview:r.rows[0]});}
   if(p[0]==='promote'){const u=requireUser(event);if(m==='POST'){const input=promoteSchema.parse(body);const r=await db().query('INSERT INTO promote_campaigns(user_id,video_id,objective,audience,budget,duration_days) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[u.id,input.videoId,input.objective,input.audience??{},input.budget,input.durationDays]);return response(201,{campaign:r.rows[0]});}const r=await db().query('SELECT * FROM promote_campaigns WHERE user_id=$1 ORDER BY created_at DESC',[u.id]);return response(200,{items:r.rows});}
   if(p[0]==='ai-video'&&m==='POST'&&p[1]==='generate'){
-    const u=requireUser(event); const input=generateSchema.parse(body); const provider=chooseProvider(input.provider);
-    const client=await db().connect();
-    try {
-      await client.query('BEGIN');
-      const balanceResult=await client.query('SELECT COALESCE(SUM(amount),0)::bigint AS balance FROM credit_ledger WHERE user_id=$1 FOR UPDATE',[u.id]);
-      const balance=Number(balanceResult.rows[0].balance);
-      if(balance<VIDEO_GENERATION_CREDITS){await client.query('ROLLBACK');return response(402,{error:'Insufficient credits',required:VIDEO_GENERATION_CREDITS,balance});}
-      const reference=`video-generation:${crypto.randomUUID()}`;
-      await client.query('INSERT INTO credit_ledger(user_id,amount,type,reference) VALUES($1,$2,$3,$4)',[u.id,-VIDEO_GENERATION_CREDITS,'video_generation',reference]);
-      let result;
-      try { result=await generateWithProvider(provider,{prompt:input.prompt,duration:input.duration,aspectRatio:input.aspectRatio,imageUrl:input.imageUrl}); }
-      catch(error){await client.query('ROLLBACK');throw error;}
-      const r=await client.query('INSERT INTO ai_jobs(user_id,provider,prompt,duration,aspect_ratio,provider_job_id,status) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[u.id,provider,input.prompt,input.duration??null,input.aspectRatio??'9:16',result.externalId,result.status]);
-      await client.query('COMMIT');
-      return response(202,{job:r.rows[0],provider,externalId:result.externalId,creditsCharged:VIDEO_GENERATION_CREDITS,remainingCredits:balance-VIDEO_GENERATION_CREDITS,message:'Video generation started.'});
-    } catch(error){try{await client.query('ROLLBACK');}catch{} throw error;} finally {client.release();}
+    const u=requireUser(event);const input=generateSchema.parse(body);const provider=chooseProvider(input.provider);
+    const charge=await chargeCredits(u.id,VIDEO_GENERATION_CREDITS,'video_generation');
+    if(!charge.ok)return response(402,{error:'Insufficient credits',required:VIDEO_GENERATION_CREDITS,balance:charge.balance});
+    try{
+      const result=await generateWithProvider(provider,{prompt:input.prompt,duration:input.duration,aspectRatio:input.aspectRatio,imageUrl:input.imageUrl});
+      const r=await db().query('INSERT INTO ai_jobs(user_id,provider,prompt,duration,aspect_ratio,provider_job_id,status) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[u.id,provider,input.prompt,input.duration??null,input.aspectRatio??'9:16',result.externalId,result.status]);
+      return response(202,{job:r.rows[0],provider,externalId:result.externalId,creditsCharged:VIDEO_GENERATION_CREDITS,remainingCredits:charge.remaining,message:'Video generation started.'});
+    }catch(error){
+      try{await refundCredits(u.id,VIDEO_GENERATION_CREDITS,'video_generation');}catch(refundError){console.error('Credit refund failed',refundError);}
+      throw error;
+    }
   }
   if(p[0]==='ai-video'&&m==='GET'&&p[1]){const u=requireUser(event);const r=await db().query('SELECT * FROM ai_jobs WHERE id=$1 AND user_id=$2',[p[1],u.id]);return r.rows[0]?response(200,{job:r.rows[0]}):response(404,{error:'Job not found'});}
   if(p[0]==='credits'){const u=requireUser(event);const r=await db().query('SELECT COALESCE(SUM(amount),0)::bigint balance FROM credit_ledger WHERE user_id=$1',[u.id]);return response(200,{balance:r.rows[0].balance});}
@@ -90,5 +55,5 @@ export const handler:Handler=async event=>{
   if(p[0]==='payments'){requireUser(event);return response(501,{error:'Use /api/subscriptions for Stripe subscriptions.'});}
   if(p[0]==='settings'){const u=requireUser(event);if(m==='GET')return response(200,{user:await getUser(u.id)});return response(501,{error:'Settings persistence endpoint not implemented yet'});}
   return response(404,{error:'Route not found',path:p.join('/')});
- }catch(e:any){const status=e?.status|| (e?.name==='ZodError'?400:500);console.error(e);return response(status,{error:e?.message||'Internal server error'});}
+ }catch(e:any){const status=e?.status||(e?.name==='ZodError'?400:500);console.error(e);return response(status,{error:e?.message||'Internal server error'});}
 };
