@@ -6,11 +6,11 @@ export async function chargeCredits(userId: string, amount: number, reason: stri
   const client = await db().connect();
   try {
     await client.query('BEGIN');
-    const result = await client.query(
-      'SELECT COALESCE(SUM(amount),0)::bigint AS balance FROM credit_ledger WHERE user_id=$1 FOR UPDATE',
+    const rows = await client.query(
+      'SELECT amount FROM credit_ledger WHERE user_id=$1 FOR UPDATE',
       [userId]
     );
-    const balance = Number(result.rows[0]?.balance ?? 0);
+    const balance = rows.rows.reduce((total: number, row: { amount: string | number }) => total + Number(row.amount), 0);
     if (balance < amount) {
       await client.query('ROLLBACK');
       return { ok: false as const, balance };
