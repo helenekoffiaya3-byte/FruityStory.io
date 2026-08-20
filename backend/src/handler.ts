@@ -8,7 +8,8 @@ import { publicPlans, getPlan, type BillingPeriod, type PlanId } from './stripe-
 import { isProfessionalFreeAccount, PROFESSIONAL_FREE_ENTITLEMENTS } from '../../netlify/functions/_lib/professional-free';
 import { generateWithProvider, chooseProvider } from '../../netlify/functions/providers';
 
-const response=(statusCode:number,body:unknown,extra:Record<string,string>={})=>({statusCode,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*','access-control-allow-headers':'Content-Type, Authorization, Stripe-Signature','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS',...extra},body:JSON.stringify(body)});
+const VIDEO_GENERATION_CREDITS = 150;
+const response=(statusCode:number,body:unknown,extra:Record<string,string>={})=>({statusCode,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':process.env.FRONTEND_ORIGIN||'https://fruitystory.io','access-control-allow-headers':'Content-Type, Authorization, Stripe-Signature','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS',...extra},body:JSON.stringify(body)});
 const jsonBody=(event:any)=>{try{return event.body?JSON.parse(event.body):{};}catch{throw Object.assign(new Error('Invalid JSON'),{status:400});}};
 const path=(event:any)=>String(event.path||'').replace(/^.*\/\.netlify\/functions\/backend\/?/,'').replace(/^\/api\/?/,'').split('/').filter(Boolean);
 const requireUser=(event:any)=>{const u=bearer(event);if(!u)throw Object.assign(new Error('Authentication required'),{status:401});return u;};
@@ -65,7 +66,24 @@ export const handler:Handler=async event=>{
   if(p[0]==='search'&&m==='GET'){const q=String(event.queryStringParameters?.q||'').trim();if(!q)return response(200,{users:[],videos:[],hashtags:[]});const term=`%${q}%`;const [users,videos,hashtags]=await Promise.all([db().query('SELECT id,username,display_name AS "displayName",avatar_url AS "avatarUrl",verified FROM users WHERE username ILIKE $1 OR display_name ILIKE $1 LIMIT 20',[term]),db().query('SELECT id,author_id AS "authorId",video_url AS "videoUrl",thumbnail_url AS "thumbnailUrl",caption,views_count AS views,likes_count AS likes,comments_count AS comments,created_at AS "createdAt" FROM videos WHERE caption ILIKE $1 AND visibility=$2 ORDER BY created_at DESC LIMIT 30',[term,'public']),db().query('SELECT DISTINCT hashtag FROM video_hashtags WHERE hashtag ILIKE $1 LIMIT 30',[term])]);return response(200,{users:users.rows,videos:videos.rows,hashtags:hashtags.rows.map(x=>x.hashtag)});}
   if(p[0]==='studio'||p[0]==='analytics'){const u=requireUser(event);const r=await db().query('SELECT COUNT(*)::int videos,COALESCE(SUM(views_count),0)::bigint views,COALESCE(SUM(likes_count),0)::bigint likes,COALESCE(SUM(comments_count),0)::bigint comments,COALESCE(SUM(shares_count),0)::bigint shares FROM videos WHERE author_id=$1',[u.id]);return response(200,{overview:r.rows[0]});}
   if(p[0]==='promote'){const u=requireUser(event);if(m==='POST'){const input=promoteSchema.parse(body);const r=await db().query('INSERT INTO promote_campaigns(user_id,video_id,objective,audience,budget,duration_days) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[u.id,input.videoId,input.objective,input.audience??{},input.budget,input.durationDays]);return response(201,{campaign:r.rows[0]});}const r=await db().query('SELECT * FROM promote_campaigns WHERE user_id=$1 ORDER BY created_at DESC',[u.id]);return response(200,{items:r.rows});}
-  if(p[0]==='ai-video'&&m==='POST'&&p[1]==='generate'){const u=requireUser(event);const input=generateSchema.parse(body);const provider=chooseProvider(input.provider);const result=await generateWithProvider(provider,{prompt:input.prompt,duration:input.duration,aspectRatio:input.aspectRatio,imageUrl:input.imageUrl});const r=await db().query('INSERT INTO ai_jobs(user_id,provider,prompt,duration,aspect_ratio,provider_job_id,status) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[u.id,provider,input.prompt,input.duration??null,input.aspectRatio??'9:16',result.externalId,result.status]);return response(202,{job:r.rows[0],provider,externalId:result.externalId,message:'Video generation started.'});}
+  if(p[0]==='ai-video'&&m==='POST'&&p[1]==='generate'){
+    const u=requireUser(event); const input=generateSchema.parse(body); const provider=chooseProvider(input.provider);
+    const client=await db().connect();
+    try {
+      await client.query('BEGIN');
+      const balanceResult=await client.query('SELECT COALESCE(SUM(amount),0)::bigint AS balance FROM credit_ledger WHERE user_id=$1 FOR UPDATE',[u.id]);
+      const balance=Number(balanceResult.rows[0].balance);
+      if(balance<VIDEO_GENERATION_CREDITS){await client.query('ROLLBACK');return response(402,{error:'Insufficient credits',required:VIDEO_GENERATION_CREDITS,balance});}
+      const reference=`video-generation:${crypto.randomUUID()}`;
+      await client.query('INSERT INTO credit_ledger(user_id,amount,type,reference) VALUES($1,$2,$3,$4)',[u.id,-VIDEO_GENERATION_CREDITS,'video_generation',reference]);
+      let result;
+      try { result=await generateWithProvider(provider,{prompt:input.prompt,duration:input.duration,aspectRatio:input.aspectRatio,imageUrl:input.imageUrl}); }
+      catch(error){await client.query('ROLLBACK');throw error;}
+      const r=await client.query('INSERT INTO ai_jobs(user_id,provider,prompt,duration,aspect_ratio,provider_job_id,status) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[u.id,provider,input.prompt,input.duration??null,input.aspectRatio??'9:16',result.externalId,result.status]);
+      await client.query('COMMIT');
+      return response(202,{job:r.rows[0],provider,externalId:result.externalId,creditsCharged:VIDEO_GENERATION_CREDITS,remainingCredits:balance-VIDEO_GENERATION_CREDITS,message:'Video generation started.'});
+    } catch(error){try{await client.query('ROLLBACK');}catch{} throw error;} finally {client.release();}
+  }
   if(p[0]==='ai-video'&&m==='GET'&&p[1]){const u=requireUser(event);const r=await db().query('SELECT * FROM ai_jobs WHERE id=$1 AND user_id=$2',[p[1],u.id]);return r.rows[0]?response(200,{job:r.rows[0]}):response(404,{error:'Job not found'});}
   if(p[0]==='credits'){const u=requireUser(event);const r=await db().query('SELECT COALESCE(SUM(amount),0)::bigint balance FROM credit_ledger WHERE user_id=$1',[u.id]);return response(200,{balance:r.rows[0].balance});}
   if(p[0]==='monetization'){requireUser(event);return response(200,{eligible:false,balance:0,estimatedRevenue:0,history:[],payouts:[],message:'Monetization is disabled.'});}
