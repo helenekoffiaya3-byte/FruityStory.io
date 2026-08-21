@@ -1,19 +1,26 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="description" content="FruityStory.io — création vidéo IA, plateforme sociale et statistiques TikTok.">
   <link rel="canonical" href="https://fruitystory-io.netlify.app/">
   <title>FruityStory.io — Création vidéo IA & Social</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<header class="topbar"><a class="brand" href="#accueil" aria-label="FruityStory.io accueil"><img src="/assets/fruitystory-logo.svg" alt="FruityStory.io" class="site-logo"><span>FruityStory.io</span></a><nav aria-label="Navigation principale"><a href="#accueil">Accueil</a><a href="/social.html">Social</a><a href="/studio.html">Studio</a><a href="/generate.html">Générer</a><a href="/promote.html">Promote</a><a href="/tiktok.html">TikTok</a><a href="/search.html">🔎</a></nav><a class="btn ghost" href="/auth.html">Se connecter</a></header>
+<header class="topbar"><a class="brand" href="#accueil" aria-label="FruityStory.io accueil"><img src="/assets/fruitystory-logo.svg" alt="FruityStory.io" class="site-logo"><span>FruityStory.io</span></a><nav aria-label="Navigation principale"><a href="#accueil">Accueil</a><a href="/social.html">Social</a><a href="/studio.html">Studio</a><a href="/generate.html">Générer</a><a href="/promote.html">Promote</a><a href="/tiktok.html">TikTok</a><a href="/search.html" aria-label="Rechercher">⌕</a></nav><a class="btn ghost" href="/auth.html">Se connecter</a></header>
 <main>
 <section id="accueil" class="hero"><div class="hero-copy"><span class="badge">🍎 FruityStory.io · vidéo IA + réseau social</span><h1>Crée, publie, découvre et développe ton audience.</h1><p>FruityStory.io rassemble la création vidéo IA, l'espace social et une connexion TikTok permettant d'afficher les statistiques autorisées du compte.</p><div class="actions"><a class="btn primary" href="/generate.html">Créer une vidéo</a><a class="btn secondary" href="/social.html">Explorer l'espace social</a></div></div><div class="hero-card"><div class="play">▶</div><strong>FruityStory Social</strong><small>Crée, publie, interagis et consulte tes statistiques TikTok.</small></div></section>
-<section class="panel"><span class="eyebrow">COMPTE TIKTOK</span><h2>Connecte TikTok à FruityStory.io</h2><p>Après autorisation, FruityStory.io affiche les informations et statistiques que TikTok rend disponibles : profil, abonnés, abonnements, likes et vidéos.</p><div class="actions"><a class="btn primary" href="/tiktok.html">Connecter TikTok</a><a class="btn secondary" href="/social.html">Espace social</a></div></section>
+<section class="panel"><span class="eyebrow">COMPTE TIKTOK</span><div><h2>Connecte TikTok à FruityStory.io</h2><p>Après autorisation, FruityStory.io affiche les informations et statistiques que TikTok rend disponibles : profil, abonnés, abonnements, likes et vidéos.</p><div class="actions"><a class="btn primary" href="/tiktok.html">Connecter TikTok</a><a class="btn secondary" href="/social.html">Espace social</a></div></div></section>
 <section class="features"><article><span>🎬</span><h2>Création IA</h2><p>Scénarios, personnages-fruits, scènes, continuité et génération vidéo.</p><a class="btn secondary" href="/generate.html">Générer</a></article><article><span>📊</span><h2>FruityStory Studio</h2><p>Gestion du contenu, analytics, audience, croissance et outils créateur.</p><a class="btn secondary" href="/studio.html">Studio</a></article><article><span>🎵</span><h2>TikTok</h2><p>Connecte ton compte et consulte les statistiques TikTok disponibles.</p><a class="btn secondary" href="/tiktok.html">Voir TikTok</a></article></section>
 </main>
-<nav class="bottom-nav"><a href="/">🏠<span>Accueil</span></a><a href="/search.html">🔎<span>Recherche</span></a><a class="create" href="/generate.html">＋<span>Créer</span></a><a href="/tiktok.html">🎵<span>TikTok</span></a><a href="/dashboard.html">👤<span>Profil</span></a></nav>
+<nav class="bottom-nav" aria-label="Navigation mobile">
+  <a class="bottom-item active" href="/" aria-label="Accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v9.1a1.1 1.1 0 0 1-1.1 1.1h-5.2v-6.2H9.3V21H4.1A1.1 1.1 0 0 1 3 19.9z"/></svg><span>Accueil</span></a>
+  <a class="bottom-item" href="/search.html" aria-label="Découvrir"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg><span>Découvrir</span></a>
+  <a class="bottom-create" href="/generate.html" aria-label="Créer"><span class="create-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>Créer</span></a>
+  <a class="bottom-item" href="/messages.html" aria-label="Messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2h9A3.5 3.5 0 0 1 20 5.5v6A3.5 3.5 0 0 1 16.5 15H11l-5.8 4v-4.6A3.5 3.5 0 0 1 4 11.5z"/><path d="M8 8h8M8 11h5"/></svg><span>Messages</span></a>
+  <a class="bottom-item" href="/dashboard.html" aria-label="Moi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg><span>Moi</span></a>
+</nav>
 <footer><span>© 2026 FruityStory.io</span><div><a href="/privacy-policy.html">Confidentialité</a><a href="/settings.html">Conditions</a></div></footer>
 </body></html>
