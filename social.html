@@ -1,26 +1,91 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FruityStory.io — Espace social</title><link rel="stylesheet" href="/styles.css">
-<style>
-body{padding-bottom:90px}.social-shell{max-width:1100px;margin:auto;padding:20px}.social-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:20px 0}.social-nav button,.module button{border:1px solid #d9e4dc;background:#fff;border-radius:12px;padding:12px;cursor:pointer}.social-nav button.active{background:#173d2a;color:#fff}.module{display:none}.module.active{display:block}.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.module-card{border:1px solid #dfe8e2;border-radius:16px;padding:16px;background:#fff}.module-card h3{margin:0 0 8px}.module-card ul{margin:8px 0 0;padding-left:20px}.subnav{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.subnav button{font-size:13px}.status{padding:12px;border-radius:12px;background:#eef6f0;margin-top:14px}
-</style></head>
-<body>
-<header class="topbar"><a class="brand" href="/">🍎 <span>FruityStory.io</span></a><a class="btn ghost" href="/settings.html">Paramètres</a></header>
-<main class="social-shell"><span class="badge">FRUITYSTORY SOCIAL</span><h1>Tout l'espace social</h1><p>Flux, amis, création, boîte de réception, profils, Studio, Promote, TikTok et paramètres.</p>
-<nav class="social-nav" aria-label="Espace social"><button data-tab="home">🏠 Accueil</button><button data-tab="friends">👥 Amis</button><button data-tab="search">🔎 Recherche</button><button data-tab="create">＋ Créer</button><button data-tab="inbox">📥 Boîte de réception</button><button data-tab="profile">👤 Profil</button><button data-tab="studio">📊 Studio</button><button data-tab="promote">📣 Promote</button><button data-tab="tiktok">🎵 TikTok</button><button data-tab="menu">☰ Menu</button></nav>
-<section id="home" class="module"><h2>Accueil / flux</h2><div class="module-grid"><div class="module-card"><h3>Pour toi</h3><ul><li>Flux personnalisé</li><li>Lecture verticale</li><li>J'aime, commentaires, partage</li><li>Repost, favoris, playlists</li><li>Pas intéressé, masquer, signaler</li></ul></div><div class="module-card"><h3>Abonnements</h3><ul><li>Vidéos des comptes suivis</li><li>Suivre / ne plus suivre</li><li>Profil créateur</li><li>Son, hashtag et lieu</li></ul></div><div class="module-card"><h3>Interactions</h3><ul><li>Duet</li><li>Stitch</li><li>Stories</li><li>Téléchargement autorisé</li><li>Sous-titres/accessibilité</li></ul></div></div></section>
-<section id="friends" class="module"><h2>Amis et relations</h2><div class="module-grid"><div class="module-card"><h3>Réseau</h3><ul><li>Amis</li><li>Abonnés</li><li>Abonnements</li><li>Suggestions</li><li>Contacts</li></ul></div><div class="module-card"><h3>Contrôles</h3><ul><li>Retirer un abonné</li><li>Bloquer / débloquer</li><li>Mettre en sourdine</li><li>Liste des comptes bloqués</li></ul></div></div></section>
-<section id="search" class="module"><h2>Recherche / Découvrir</h2><div class="module-card"><ul><li>Utilisateurs</li><li>Vidéos</li><li>Hashtags</li><li>Sons</li><li>Filtres</li><li>Tendances</li><li>Historique</li></ul><a class="btn primary" href="/search.html">Ouvrir la recherche</a></div></section>
-<section id="create" class="module"><h2>Créer (+)</h2><div class="module-grid"><div class="module-card"><h3>Création</h3><ul><li>Caméra/import</li><li>Photos/vidéo</li><li>Durée, vitesse, minuteur, flash, zoom</li><li>Effets, filtres, sons</li></ul></div><div class="module-card"><h3>Édition</h3><ul><li>Timeline et découpage</li><li>Texte, stickers, emojis</li><li>Transitions</li><li>Volume, musique, voix</li><li>Sous-titres</li><li>Couverture</li></ul></div><div class="module-card"><h3>IA FruityStory</h3><ul><li>Scénario</li><li>Personnages-fruits</li><li>Continuité</li><li>Génération vidéo</li><li>Jobs et crédits</li></ul><a class="btn primary" href="/generate.html">Générer</a></div></div></section>
-<section id="inbox" class="module"><h2>Boîte de réception</h2><div class="module-grid"><div class="module-card"><h3>Activités</h3><ul><li>J'aime et favoris</li><li>Commentaires</li><li>Mentions et tags</li><li>Abonnements</li><li>Réponses</li><li>Reposts</li></ul></div><div class="module-card"><h3>Messages</h3><ul><li>Conversations</li><li>Demandes</li><li>Réactions</li><li>Partager une vidéo</li><li>Partager un profil</li><li>Signaler / bloquer</li></ul></div></div></section>
-<section id="profile" class="module"><h2>Profil</h2><div class="module-grid"><div class="module-card"><h3>Profil personnel</h3><ul><li>Avatar, nom, pseudo, bio</li><li>Abonnés / abonnements / likes</li><li>Vidéos</li><li>Favoris</li><li>Playlists</li><li>Reposts</li><li>Brouillons</li></ul><a class="btn secondary" href="/dashboard.html">Ouvrir mon profil</a></div><div class="module-card"><h3>Autre utilisateur</h3><ul><li>Profil public</li><li>Suivre / ami</li><li>Message</li><li>Partager</li><li>Signaler / bloquer / sourdine</li><li>Contenu public</li></ul><a class="btn secondary" href="/user-profile.html">Profil public</a></div></div></section>
-<section id="studio" class="module"><h2>FruityStory Studio</h2><div class="module-grid"><div class="module-card"><h3>Création & gestion</h3><ul><li>Inspiration</li><li>Tendances</li><li>Bibliothèque</li><li>Brouillons</li><li>Programmation</li><li>Gestion des publications</li><li>Commentaires/modération</li></ul></div><div class="module-card"><h3>Analytics</h3><ul><li>Vue d'ensemble</li><li>Contenu</li><li>Vidéos</li><li>Audience</li><li>Followers</li><li>Croissance</li><li>Heures d'activité</li></ul></div><div class="module-card"><h3>Outils</h3><ul><li>Outils créatifs</li><li>Ressources</li><li>Promote</li><li>Connexion TikTok</li></ul><a class="btn primary" href="/studio.html">Ouvrir Studio</a></div></div></section>
-<section id="promote" class="module"><h2>Promote</h2><div class="module-grid"><div class="module-card"><h3>Campagne</h3><ul><li>Publication à promouvoir</li><li>Objectif</li><li>Audience automatique/personnalisée</li><li>Budget</li><li>Durée</li><li>Estimation</li><li>Paiement</li></ul></div><div class="module-card"><h3>Suivi</h3><ul><li>En attente</li><li>Active</li><li>En pause</li><li>Rejetée</li><li>Dépenses</li><li>Vues / profil</li><li>Followers / likes / commentaires / clics</li></ul></div></div><a class="btn primary" href="/promote.html">Ouvrir Promote</a></section>
-<section id="tiktok" class="module"><h2>Compte TikTok</h2><div class="module-grid"><div class="module-card"><h3>Connexion</h3><p>Connecte ton compte TikTok avec l'autorisation officielle TikTok.</p><a class="btn primary" href="/tiktok.html">Connecter TikTok</a></div><div class="module-card"><h3>Statistiques</h3><ul><li>Abonnés</li><li>Abonnements</li><li>Likes reçus</li><li>Vidéos publiques</li><li>Informations de profil autorisées</li></ul><a class="btn secondary" href="/tiktok.html">Voir mes statistiques</a></div></div></section>
-<section id="menu" class="module"><h2>Menu</h2><div class="module-grid"><div class="module-card"><h3>Accès rapides</h3><div class="subnav"><a class="btn secondary" href="/dashboard.html">Profil</a><a class="btn secondary" href="/studio.html">Studio</a><a class="btn secondary" href="/promote.html">Promote</a><a class="btn secondary" href="/tiktok.html">TikTok</a><a class="btn secondary" href="/settings.html">Paramètres</a></div></div><div class="module-card"><h3>Compte et sécurité</h3><ul><li>Compte</li><li>Confidentialité</li><li>Sécurité</li><li>Notifications</li><li>Accessibilité</li><li>Langue</li><li>Temps d'écran</li><li>Comptes bloqués</li><li>Données et permissions</li><li>Supprimer/désactiver le compte</li></ul></div></div></section>
-<div class="status" role="status">Le module de revenus n'est pas disponible. FruityStory.io se limite ici à la connexion TikTok et à l'affichage des statistiques autorisées.</div></main>
-<nav class="bottom-nav"><a href="/">🏠<span>Accueil</span></a><a href="/search.html">🔎<span>Recherche</span></a><a class="create" href="/generate.html">＋<span>Créer</span></a><a href="/tiktok.html">🎵<span>TikTok</span></a><a href="/dashboard.html">👤<span>Profil</span></a></nav>
-<script>const buttons=[...document.querySelectorAll('[data-tab]')],tabs=[...document.querySelectorAll('.module')];function openTab(id){tabs.forEach(x=>x.classList.toggle('active',x.id===id));buttons.forEach(x=>x.classList.toggle('active',x.dataset.tab===id));location.hash=id}buttons.forEach(b=>b.addEventListener('click',()=>openTab(b.dataset.tab)));openTab(location.hash.slice(1)||'home');</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="FruityStory.io — réseau social et création vidéo IA.">
+<link rel="stylesheet" href="/styles.css"><title>FruityStory.io — Monde des fruits</title>
+</head>
+<body class="social-page">
+<header class="social-topbar">
+  <button class="icon-btn" id="addFriend" aria-label="Ajouter un ami" title="Ajouter un ami"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2.5 20c.7-4 3-6 6.5-6s5.8 2 6.5 6M19 11v6M16 14h6"/></svg></button>
+  <div class="top-spacer"></div>
+  <button class="icon-btn" id="calendarBtn" aria-label="Événements" title="Événements"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 9h16M9 13h6v5H9z"/></svg></button>
+  <button class="icon-btn" id="shareBtn" aria-label="Partager le profil" title="Partager"><svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M12 16V3M7 8l5-5 5 5"/></svg></button>
+  <button class="icon-btn" id="menuBtn" aria-label="Ouvrir le menu" title="Menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+</header>
+
+<main class="profile-head">
+  <div class="new-bubble">Quoi de<br>neuf ?</div>
+  <div class="profile-avatar"><img src="/assets/social-avatar.svg" alt="Avatar du profil"><button class="avatar-add" id="avatarAdd" aria-label="Ajouter une story">+</button></div>
+  <div class="profile-actions"><span class="notice">9+</span><button class="edit-pill" id="editProfile" aria-label="Modifier le profil"><svg viewBox="0 0 24 24"><path d="m4 20 3.5-.8L19 7.7a2.1 2.1 0 0 0-3-3L4.5 16.2 4 20zM13.5 6.5l4 4"/></svg></button></div>
+  <h1>Mondes des fruits 🍓🍒</h1>
+  <div class="handle">@fruity_world0</div>
+  <section class="stats" aria-label="Statistiques du profil"><div><b>564</b><span>Suivis</span></div><div><b>19,6 K</b><span>Followers</span></div><div><b>67,4 K</b><span>J'aime</span></div></section>
+  <p class="bio">Tu veux créer les mêmes vidéos que moi <button class="text-link" id="bioCreate">cliquez ici</button><br>Merci pour les 10K<br>nouveau cap abonné vous a mon nouveau compte<br><strong>@Fruity University 2</strong><br><button class="text-link" id="bioLink">🔗 https://www.trendstory.io/</button></p>
+  <nav class="creator-tabs" aria-label="Outils créateur"><button data-action="balance">▣ Solde</button><button data-action="studio">♙ TikTok Studio</button><button data-action="live">▣ LIVE</button><button data-action="subscription">✧ Abonnement</button></nav>
+  <section class="story-row" aria-label="Stories"><button class="story" id="newStory"><span class="story-circle plus">+</span><span>Nouveau</span></button><button class="story" id="storyTwo"><span class="story-circle scene"><img src="/assets/social-thumb-3.svg" alt="Story vidéo"></span><span>si tu kiffe...</span></button></section>
+</main>
+
+<nav class="feed-controls" aria-label="Onglets du profil">
+  <button class="selected" data-feed="videos" aria-label="Vidéos"><svg viewBox="0 0 24 24"><path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM10 10h4v4h-4zM16 10h4v4h-4zM4 16h4v4H4zM10 16h4v4h-4zM16 16h4v4h-4z"/></svg></button>
+  <button data-feed="spark" aria-label="Créations"><svg viewBox="0 0 24 24"><path d="m12 2 2.1 6.1L20 10l-5.9 2.1L12 18l-2.1-5.9L4 10l5.9-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></button>
+  <button data-feed="private" aria-label="Privé"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></button>
+  <button data-feed="reposts" aria-label="Reposts"><svg viewBox="0 0 24 24"><path d="m7 7-4 4 4 4M3 11h11a5 5 0 0 1 5 5v1M17 17l4-4-4-4M21 13H10a5 5 0 0 1-5-5V7"/></svg></button>
+  <button data-feed="saved" aria-label="Favoris"><svg viewBox="0 0 24 24"><path d="M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4z"/></svg></button>
+  <button data-feed="likes" aria-label="J'aime"><svg viewBox="0 0 24 24"><path d="M20.8 8.7c0 5.1-8.8 11-8.8 11s-8.8-5.9-8.8-11A4.7 4.7 0 0 1 8 4a5.2 5.2 0 0 1 4 2.2A5.2 5.2 0 0 1 16 4a4.7 4.7 0 0 1 4.8 4.7z"/></svg></button>
+</nav>
+
+<section class="video-grid" id="videoGrid" aria-label="Vidéos publiées">
+  <button class="video-card" data-video="1"><img src="/assets/social-thumb-1.svg" alt="Vidéo Fruity Story"><span class="grid-label">Épinglé</span><span class="views">▷ 34,8 M</span></button>
+  <button class="video-card" data-video="2"><img src="/assets/social-thumb-2.svg" alt="Vidéo famille de fruits"><span class="grid-label">Épinglé</span><span class="views">▷ 18,5 K</span></button>
+  <button class="video-card" data-video="3"><img src="/assets/social-thumb-3.svg" alt="Vidéo monde des fruits"><span class="grid-label">Épinglé</span><span class="views">▷ 61,6 K</span></button>
+  <button class="video-card" data-video="4"><img src="/assets/social-thumb-4.svg" alt="Vidéo nouvelle histoire"><span class="views">▷ 9,2 K</span></button>
+  <button class="video-card" data-video="5"><img src="/assets/social-thumb-5.svg" alt="Vidéo rêve IA"><span class="views">▷ 22,1 K</span></button>
+  <button class="video-card" data-video="6"><img src="/assets/social-thumb-6.svg" alt="Vidéo World Cup Story"><span class="views">▷ 44,7 K</span></button>
+</section>
+
+<nav class="bottom-nav" aria-label="Navigation mobile">
+  <a class="bottom-item active" href="/social.html"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.1a1.1 1.1 0 0 1-1.1 1.1h-5.2v-6.2H9.3V21H4.1A1.1 1.1 0 0 1 3 19.9z"/></svg><span>Accueil</span></a>
+  <a class="bottom-item" href="/search.html"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg><span>Découvrir</span></a>
+  <a class="bottom-create" href="/generate.html"><span class="create-button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></a>
+  <a class="bottom-item" href="/messages.html"><svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2h9A3.5 3.5 0 0 1 20 5.5v6A3.5 3.5 0 0 1 16.5 15H11l-5.8 4v-4.6A3.5 3.5 0 0 1 4 11.5z"/></svg><span>Messages</span><b class="message-badge">99+</b></a>
+  <a class="bottom-item" href="/dashboard.html"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/></svg><span>Profil</span></a>
+</nav>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="side-drawer" id="sideDrawer" aria-label="Menu principal" aria-hidden="true">
+  <header><button class="drawer-close" id="drawerClose" aria-label="Fermer">×</button><strong>Menu</strong></header>
+  <h2>Ressources</h2><div class="drawer-group"><button data-menu="balance"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M7 6V4h10v2M15 13h4"/></svg><span>Solde</span><b>›</b></button></div>
+  <h2>Outils personnels</h2><div class="drawer-group">
+    <button data-menu="activity"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Centre des activités</span><b>›</b></button>
+    <button data-menu="offline"><svg viewBox="0 0 24 24"><path d="M6 17a5 5 0 0 1 1-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 8h-2"/><path d="M12 11v8M9 16l3 3 3-3"/></svg><span>Vidéos hors ligne</span><b>›</b></button>
+    <button data-menu="qr"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM15 15h2v2h-2zM19 15h1v5h-5v-2h4z"/></svg><span>Ton code QR</span><b>›</b></button>
+    <button data-menu="music"><svg viewBox="0 0 24 24"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg><span>Ta musique</span><b>›</b></button>
+  </div>
+  <h2>Outils de création et professionnels</h2><div class="drawer-group">
+    <button data-menu="studio"><svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><path d="M2.5 20c.5-4 2.5-6 5.5-6s5 2 5.5 6M18 12v7M14.5 15.5h7"/></svg><span>TikTok Studio</span><b>›</b></button>
+    <button data-menu="research"><svg viewBox="0 0 24 24"><path d="m12 3 2 5 5 2-5 2-2 5-2-5-5-2 5-2zM19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg><span>Analyse des recherches pour les créateurs</span><b>›</b></button>
+    <button data-menu="promote"><svg viewBox="0 0 24 24"><path d="M12 3c5 4 7 8 4 13-2 3-7 4-10 1-3-3-1-8 2-10 0 4 2 5 4 6-1-4 0-7 0-10z"/></svg><span>Promouvoir</span><b>›</b></button>
+  </div>
+  <h2>Compte</h2><div class="drawer-group"><button data-menu="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.1h-2.6v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 0 0 8 15a1.7 1.7 0 0 0-1.5-1H6v-2.6h.1A1.7 1.7 0 0 0 7.6 10a1.7 1.7 0 0 0-.3-1.9l-.1-.1L9 6.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V5h2.6v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1V14h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Paramètres et confidentialité</span><b>›</b></button></div>
+</aside>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const drawer=$('#sideDrawer'),overlay=$('#drawerOverlay');
+function setDrawer(open){drawer.classList.toggle('open',open);overlay.classList.toggle('open',open);drawer.setAttribute('aria-hidden',String(!open));}
+$('#menuBtn').addEventListener('click',()=>setDrawer(true)); $('#drawerClose').addEventListener('click',()=>setDrawer(false)); overlay.addEventListener('click',()=>setDrawer(false));
+$('#addFriend').addEventListener('click',()=>alert('Recherche d’amis ouverte.'));
+$('#calendarBtn').addEventListener('click',()=>alert('Centre des événements FruityStory.'));
+$('#shareBtn').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(location.href);alert('Lien du profil copié.')}catch{alert('Lien du profil : '+location.href)}});
+$('#avatarAdd').addEventListener('click',()=>alert('Ajoute une nouvelle story.'));
+$('#editProfile').addEventListener('click',()=>location.href='/settings.html');
+$('#bioCreate').addEventListener('click',()=>location.href='/generate.html');
+$('#bioLink').addEventListener('click',()=>location.href='https://www.trendstory.io/');
+$('#newStory').addEventListener('click',()=>alert('Créer une nouvelle story.'));
+$('#storyTwo').addEventListener('click',()=>alert('Lecture de la story.'));
+$$('.creator-tabs button').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.action;if(a==='balance')location.href='/balance.html';else if(a==='studio')location.href='/studio.html';else if(a==='subscription')location.href='/subscriptions.html';else alert(a==='live'?'Ouverture du LIVE.':'Action disponible.')}));
+$$('[data-feed]').forEach(b=>b.addEventListener('click',()=>{$$('[data-feed]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');alert('Onglet « '+b.getAttribute('aria-label')+' » sélectionné.')}));
+$$('.video-card').forEach(b=>b.addEventListener('click',()=>location.href='/video.html?id='+encodeURIComponent(b.dataset.video)));
+$$('[data-menu]').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.menu;setDrawer(false);if(a==='balance')location.href='/balance.html';else if(a==='studio')location.href='/studio.html';else if(a==='promote')location.href='/promote.html';else if(a==='settings')location.href='/settings.html';else alert('Ouverture de '+b.querySelector('span').textContent+'.')}));
+</script>
 </body></html>
