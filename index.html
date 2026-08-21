@@ -1,26 +1,44 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="description" content="FruityStory.io — création vidéo IA, plateforme sociale et statistiques TikTok.">
-  <link rel="canonical" href="https://fruitystory-io.netlify.app/">
-  <title>FruityStory.io — Création vidéo IA & Social</title>
-  <link rel="stylesheet" href="/styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#fff"><meta name="description" content="FruityStory.io — réseau social et création vidéo IA."><link rel="stylesheet" href="/styles.css"><title>FruityStory.io — Monde des fruits</title>
 </head>
-<body>
-<header class="topbar"><a class="brand" href="#accueil" aria-label="FruityStory.io accueil"><img src="/assets/fruitystory-logo.svg" alt="FruityStory.io" class="site-logo"><span>FruityStory.io</span></a><nav aria-label="Navigation principale"><a href="#accueil">Accueil</a><a href="/social.html">Social</a><a href="/studio.html">Studio</a><a href="/generate.html">Générer</a><a href="/promote.html">Promote</a><a href="/tiktok.html">TikTok</a><a href="/search.html" aria-label="Rechercher">⌕</a></nav><a class="btn ghost" href="/auth.html">Se connecter</a></header>
+<body class="social-page">
+<header class="social-topbar">
+<button class="icon-btn" aria-label="Ajouter un ami"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2.5 20c.7-4 3-6 6.5-6s5.8 2 6.5 6M19 11v6M16 14h6"/></svg></button><div class="top-spacer"></div>
+<button class="icon-btn"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M4 9h16M12 12l1 2h2l-2 1.5.7 2.2L12 16.5 10.3 18l.7-2.5L9 14h2z"/></svg></button>
+<button class="icon-btn"><svg viewBox="0 0 24 24"><path d="M14 5l7 7-7 7v-4C8 15 5 18 3 21c0-7 3-11 11-12V5z"/></svg></button>
+<button class="icon-btn" id="menuOpen" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+</header>
 <main>
-<section id="accueil" class="hero"><div class="hero-copy"><span class="badge">🍎 FruityStory.io · vidéo IA + réseau social</span><h1>Crée, publie, découvre et développe ton audience.</h1><p>FruityStory.io rassemble la création vidéo IA, l'espace social et une connexion TikTok permettant d'afficher les statistiques autorisées du compte.</p><div class="actions"><a class="btn primary" href="/generate.html">Créer une vidéo</a><a class="btn secondary" href="/social.html">Explorer l'espace social</a></div></div><div class="hero-card"><div class="play">▶</div><strong>FruityStory Social</strong><small>Crée, publie, interagis et consulte tes statistiques TikTok.</small></div></section>
-<section class="panel"><span class="eyebrow">COMPTE TIKTOK</span><div><h2>Connecte TikTok à FruityStory.io</h2><p>Après autorisation, FruityStory.io affiche les informations et statistiques que TikTok rend disponibles : profil, abonnés, abonnements, likes et vidéos.</p><div class="actions"><a class="btn primary" href="/tiktok.html">Connecter TikTok</a><a class="btn secondary" href="/social.html">Espace social</a></div></div></section>
-<section class="features"><article><span>🎬</span><h2>Création IA</h2><p>Scénarios, personnages-fruits, scènes, continuité et génération vidéo.</p><a class="btn secondary" href="/generate.html">Générer</a></article><article><span>📊</span><h2>FruityStory Studio</h2><p>Gestion du contenu, analytics, audience, croissance et outils créateur.</p><a class="btn secondary" href="/studio.html">Studio</a></article><article><span>🎵</span><h2>TikTok</h2><p>Connecte ton compte et consulte les statistiques TikTok disponibles.</p><a class="btn secondary" href="/tiktok.html">Voir TikTok</a></article></section>
-</main>
-<nav class="bottom-nav" aria-label="Navigation mobile">
-  <a class="bottom-item active" href="/" aria-label="Accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v9.1a1.1 1.1 0 0 1-1.1 1.1h-5.2v-6.2H9.3V21H4.1A1.1 1.1 0 0 1 3 19.9z"/></svg><span>Accueil</span></a>
-  <a class="bottom-item" href="/search.html" aria-label="Découvrir"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg><span>Découvrir</span></a>
-  <a class="bottom-create" href="/generate.html" aria-label="Créer"><span class="create-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>Créer</span></a>
-  <a class="bottom-item" href="/messages.html" aria-label="Messages"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2h9A3.5 3.5 0 0 1 20 5.5v6A3.5 3.5 0 0 1 16.5 15H11l-5.8 4v-4.6A3.5 3.5 0 0 1 4 11.5z"/><path d="M8 8h8M8 11h5"/></svg><span>Messages</span></a>
-  <a class="bottom-item" href="/dashboard.html" aria-label="Moi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg><span>Moi</span></a>
+<section class="profile-head">
+<div class="profile-avatar"><div class="avatar-art"><span>🍓</span><span>🍒</span><span>🍌</span></div><button class="avatar-add">+</button></div><div class="new-bubble">Quoi de<br>neuf ?</div>
+<h1>Monde des fruits 🍓🍒</h1><div class="handle">@fruity_world0</div><div class="profile-actions"><span class="notice">9+</span><button class="edit-pill"><svg viewBox="0 0 24 24"><path d="M4 20l4.2-1 9.8-9.8a2.1 2.1 0 0 0-3-3L5.2 16 4 20zM13.5 7.5l3 3"/></svg></button></div>
+<div class="stats"><div><b>564</b><span>Suivis</span></div><div><b>19,6 K</b><span>Followers</span></div><div><b>67,4 K</b><span>J'aime</span></div></div>
+<p class="bio">Tu veux créer les mêmes vidéos que moi cliquez ici<br>Merci pour les 10K<br>nouveau cap abonné vous a mon nouveau compte<br><strong>@Fruity University 2</strong><br><a href="#">🔗 https://www.trendstory.io/</a></p>
+<div class="creator-tabs"><button>▣ Solde</button><button>♙ TikTok Studio</button><button>♙ LIVE</button><button>♧ Abonnement</button></div>
+<div class="story-row"><div class="story"><div class="story-circle plus">+</div><span>Nouveau</span></div><div class="story"><div class="story-circle scene">🍉</div><span>si tu kiffe...</span></div></div>
+</section>
+<section class="feed-controls"><button class="selected"><svg viewBox="0 0 24 24"><path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM10 10h4v4h-4zM16 10h4v4h-4zM4 16h4v4H4zM10 16h4v4h-4zM16 16h4v4h-4z"/></svg><span>▾</span></button><button><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.5L20 10l-4.5 3.5L17 19l-5-3-5 3 1.5-5.5L4 10l5.8-1.5z"/></svg></button><button><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 6h4M10 18h4"/></svg></button><button><svg viewBox="0 0 24 24"><path d="M5 7l4 4-4 4M19 7l-4 4 4 4M13 5l-2 14"/></svg></button><button><svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></button><button><svg viewBox="0 0 24 24"><path d="M20 8c0 6-8 11-8 11S4 14 4 8a4 4 0 0 1 7-2 4 4 0 0 1 9 2z"/></svg></button></section>
+<section class="video-grid">
+<article class="video-card"><div class="thumb thumb-a"><div class="fruit-person banana">🍌</div><div class="grid-label">Épinglé</div></div><span class="views">▶ 18,5 K</span></article>
+<article class="video-card"><div class="thumb thumb-b"><div class="fruit-family">🍓 🍌 🍒</div><div class="grid-label">Épinglé</div></div><span class="views">▶ 61,6 K</span></article>
+<article class="video-card"><div class="thumb thumb-c"><div class="fruit-person strawberry">🍓</div><div class="grid-label">Épinglé</div></div><span class="views">▶ 34,8 M</span></article>
+<article class="video-card"><div class="thumb thumb-d"><div class="fruit-family">🍌🌊🍉</div></div><span class="views">▶ 9,4 K</span></article>
+<article class="video-card"><div class="thumb thumb-e"><div class="fruit-person purple">🍇</div></div><span class="views">▶ 12,1 K</span></article>
+<article class="video-card"><div class="thumb thumb-f"><div class="fruit-family">🍍 🍓</div></div><span class="views">▶ 27,3 K</span></article>
+</section></main>
+<nav class="bottom-nav social-bottom">
+<a class="bottom-item active" href="#"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Accueil</span></a>
+<a class="bottom-item" href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="10" r="3"/><path d="M2.5 20c.6-3.5 2.8-5.5 6.5-5.5s5.9 2 6.5 5.5M15 15c3.3-.1 5.5 1.6 6 4"/></svg><span>Ami(e)s</span></a>
+<a class="bottom-create" href="/generate.html" aria-label="Créer"><span class="create-button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></a>
+<a class="bottom-item message-item" href="#"><span class="message-badge">99+</span><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/></svg><span>Messages</span></a>
+<a class="bottom-item" href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4.2 3.3-6 8-6s7.3 1.8 8 6"/></svg><span>Profil</span></a>
 </nav>
-<footer><span>© 2026 FruityStory.io</span><div><a href="/privacy-policy.html">Confidentialité</a><a href="/settings.html">Conditions</a></div></footer>
+<div class="drawer-overlay" id="drawerOverlay"></div><aside class="side-drawer" id="sideDrawer" aria-hidden="true">
+<header><button id="menuClose" class="drawer-close">‹</button><strong>Ressources</strong></header><div class="drawer-group"><button><span>▣</span>Solde <b>›</b></button></div>
+<h2>Outils personnels</h2><div class="drawer-group"><button><span>◷</span>Centre des activités <b>›</b></button><button><span>⇩</span>Vidéos hors ligne <b>›</b></button><button><span>▦</span>Ton code QR <b>›</b></button><button><span>♫</span>Ta musique <b>›</b></button></div>
+<h2>Outils de création et professionnels</h2><div class="drawer-group"><button><span>♙</span>TikTok Studio <b>›</b></button><button><span>♢</span>Analyse des recherches pour les créateurs <b>›</b></button><button><span>♨</span>Promouvoir <b>›</b></button></div><div class="drawer-group"><button><span>⚙</span>Paramètres et confidentialité <b>›</b></button></div>
+</aside>
+<script>const o=document.getElementById('menuOpen'),c=document.getElementById('menuClose'),d=document.getElementById('sideDrawer'),v=document.getElementById('drawerOverlay');function t(x){d.classList.toggle('open',x);v.classList.toggle('open',x);d.setAttribute('aria-hidden',String(!x))}o.onclick=()=>t(true);c.onclick=()=>t(false);v.onclick=()=>t(false);</script>
 </body></html>
