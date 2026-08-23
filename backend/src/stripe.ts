@@ -15,7 +15,10 @@ export function stripe() {
 function priceIdFor(planId: PlanId, billingPeriod: BillingPeriod) {
   const plan = getPlan(planId);
   if (!plan) throw Object.assign(new Error('Unknown subscription plan'), { status: 400 });
-  const envName = billingPeriod === 'annual' ? plan.annualPriceEnv : plan.priceEnv;
+  if (billingPeriod === 'annual' && !plan.annualPriceEnv) {
+    throw Object.assign(new Error(`${plan.name} is available only with monthly billing`), { status: 400 });
+  }
+  const envName = billingPeriod === 'annual' ? plan.annualPriceEnv! : plan.priceEnv;
   const priceId = process.env[envName];
   if (!priceId) throw Object.assign(new Error(`${envName} is not configured`), { status: 503 });
   return { plan, priceId };
@@ -26,7 +29,7 @@ export async function createSubscriptionCheckout(userId: string, email: string |
   const { plan, priceId } = priceIdFor(planId, billingPeriod);
   const s = stripe();
   const price = await s.prices.retrieve(priceId);
-  const expectedAmount = Math.round((billingPeriod === 'annual' ? plan.annualPrice : plan.price) * 100);
+  const expectedAmount = Math.round(((billingPeriod === 'annual' ? plan.annualPrice : plan.price) ?? 0) * 100);
   const expectedInterval = billingPeriod === 'annual' ? 'year' : 'month';
   if (price.currency !== plan.currency || price.unit_amount !== expectedAmount || price.type !== 'recurring' || price.recurring?.interval !== expectedInterval) {
     throw Object.assign(new Error(`Stripe price does not match ${plan.name} ${billingPeriod}`), { status: 500 });
