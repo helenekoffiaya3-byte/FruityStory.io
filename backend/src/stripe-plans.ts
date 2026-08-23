@@ -1,4 +1,4 @@
-export type PlanId = 'standard' | 'premium' | 'pro' | 'ultra_pro';
+export type PlanId = 'standard' | 'premium' | 'pro' | 'ultra_king' | 'ultra_premium_kingdom';
 export type BillingPeriod = 'monthly' | 'annual';
 
 export interface PlanConfig {
@@ -6,7 +6,7 @@ export interface PlanConfig {
   name: string;
   currency: 'eur';
   price: number;
-  annualPrice: number;
+  annualPrice: number | null;
   credits: number;
   bonusCredits: number;
   videosPerDay: number | null;
@@ -15,7 +15,7 @@ export interface PlanConfig {
   customFeatures: number;
   agentGpt: boolean;
   priceEnv: string;
-  annualPriceEnv: string;
+  annualPriceEnv: string | null;
 }
 
 export const PLANS: Record<PlanId, PlanConfig> = {
@@ -37,11 +37,17 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     categories: ['all'], customFeatures: 0, agentGpt: false,
     priceEnv: 'STRIPE_PRICE_PRO', annualPriceEnv: 'STRIPE_PRICE_PRO_ANNUAL'
   },
-  ultra_pro: {
-    id: 'ultra_pro', name: 'Méga Giga Ultra Premium', currency: 'eur', price: 29.99, annualPrice: 299.90,
-    credits: 70000, bonusCredits: 13000, videosPerDay: null, maxDurationMinutes: null,
-    categories: ['all', 'all-subscription-benefits'], customFeatures: 6, agentGpt: true,
-    priceEnv: 'STRIPE_PRICE_ULTRA_PRO', annualPriceEnv: 'STRIPE_PRICE_ULTRA_PRO_ANNUAL'
+  ultra_king: {
+    id: 'ultra_king', name: 'Ultra King', currency: 'eur', price: 200, annualPrice: null,
+    credits: 100000, bonusCredits: 0, videosPerDay: null, maxDurationMinutes: null,
+    categories: ['all'], customFeatures: 5, agentGpt: true,
+    priceEnv: 'STRIPE_PRICE_ULTRA_KING', annualPriceEnv: null
+  },
+  ultra_premium_kingdom: {
+    id: 'ultra_premium_kingdom', name: 'Ultra Premium Kingdom', currency: 'eur', price: 400, annualPrice: null,
+    credits: 500000, bonusCredits: 0, videosPerDay: null, maxDurationMinutes: null,
+    categories: ['all', 'kingdom'], customFeatures: 5, agentGpt: true,
+    priceEnv: 'STRIPE_PRICE_ULTRA_PREMIUM_KINGDOM', annualPriceEnv: null
   },
 };
 
